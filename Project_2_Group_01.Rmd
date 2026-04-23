@@ -1,7 +1,7 @@
 ---
 title: "Kriging in Sports"
 subtitle: "CMDA-4654 Project 2"
-author: "Group 1 | Baker Dean, Toshaani Dewan?, Nick Fitti, Nico Ottobre, Margaret Smith"
+author: "Group 1 | Baker Dean, Toshaani Dewan, Nick Fitti, Nico Ottobre, Margaret Smith"
 date: "April 2026"
 fontsize: 9pt
 classoption: "aspectratio=169"
@@ -35,8 +35,10 @@ header-includes:
 - \usepackage{bm}
 - \usepackage{enumitem}
 - \usepackage{underscore}
+- \setlist[itemize]{label=\textbullet}
 ---
 ```{r setup, include=FALSE}
+#Libraries
 library(knitr)
 library(dplyr)
 library(ggplot2)
@@ -47,7 +49,9 @@ library(sp)
 library(automap)
 library(patchwork)
 library(scales)
+library(sportyR)
 
+# Setup
 knitr::opts_chunk$set(echo = FALSE,
                       comment = NA,
                       message = FALSE,
@@ -61,47 +65,44 @@ knitr::knit_hooks$set(chunk = function(x, options) {
 })
 ```
 
-```{r load-data, cache=TRUE}
-# All data loading and function definitions here
-# cache=TRUE means this only runs once
-# Read in data using hoopR
+```{r load-nba-data, cache=TRUE, include=FALSE}
+# Read in NBA play-by-play data for the 2025-26 season
 pbp <- load_nba_pbp(seasons = 2026)
 player_box <- load_nba_player_box(seasons = 2026)
 
-player_names <- player_box |>
-  distinct(athlete_id, athlete_display_name)
+# Read in a dictionary of player names and their IDs for the NBA data
+player_names <- player_box %>% distinct(athlete_id, athlete_display_name)
 ```
 
-```{r}
+```{r, include=FALSE}
 # Unprinted Code for NBA Example
 
-# Libraries
-library(dplyr)
-library(hoopR)
-library(progressr)
-library(ggplot2)
-library(sportyR)
-library(gstat)
-library(sp)
-library(automap)
+# Constants
+rim_x <- 5.25
+three_pt_r <- 23.75
+corner_x <- rim_x + sqrt(three_pt_r^2 - 22^2)
+paint_x <- 19
+paint_y <- 8
+bin_size <- 2
+min_attempts <- 10
 
 # Function to draft the lines of a basketball halfcourt
 draw_court <- function() {
-  rim_x <- 5.25
-  three_pt_r <- 23.75
-  corner_x <- rim_x + sqrt(three_pt_r^2 - 22^2)
+  
+  # Define the angle of the three point line
   angle_top <- atan2(22, corner_x - rim_x)
   angle_bot <- atan2(-22, corner_x - rim_x)
   
+  # Build the three point line using arc points
   arc_points <- data.frame(
     x = rim_x + three_pt_r * cos(seq(angle_top, angle_bot, length.out = 1000)),
     y = three_pt_r * sin(seq(angle_top, angle_bot, length.out = 1000))
   )
   
+  # Make a list of the output elements
   list(
     # Three point arc
-    geom_path(data = arc_points,
-              aes(x = x, y = y), inherit.aes = FALSE, color = "black", linewidth = 0.6),
+    geom_path(data = arc_points, aes(x = x, y = y), inherit.aes = FALSE, color = "black", linewidth = 0.6),
     # Corner three lines
     geom_path(data = data.frame(x = c(0, corner_x), y = c(22, 22)),
               aes(x = x, y = y), inherit.aes = FALSE, color = "black", linewidth = 0.6),
@@ -110,45 +111,109 @@ draw_court <- function() {
     # Paint
     geom_path(data = data.frame(x = c(0, 19, 19, 0, 0), y = c(8, 8, -8, -8, 8)),
               aes(x = x, y = y), inherit.aes = FALSE, color = "black", linewidth = 0.6),
-    # FT circle solid half
-    geom_path(data = data.frame(
-      x = 19 + 6 * cos(seq(-pi/2, pi/2, length.out = 500)),
-      y = 6 * sin(seq(-pi/2, pi/2, length.out = 500))),
-      aes(x = x, y = y), inherit.aes = FALSE, color = "black", linewidth = 0.6),
-    # FT circle dashed half
-    geom_path(data = data.frame(
-      x = 19 + 6 * cos(seq(pi/2, 3*pi/2, length.out = 500)),
-      y = 6 * sin(seq(pi/2, 3*pi/2, length.out = 500))),
-      aes(x = x, y = y), inherit.aes = FALSE, color = "black",
-      linewidth = 0.6, linetype = "dashed"),
+    # FT circle solid
+    geom_path(data = data.frame( x = 19 + 6 * cos(seq(-pi/2, pi/2, length.out = 500)),
+                                 y = 6 * sin(seq(-pi/2, pi/2, length.out = 500))), aes(x = x, y = y),
+              inherit.aes = FALSE, color = "black", linewidth = 0.6),
+    # FT circle dashed
+    geom_path(data = data.frame(x = 19 + 6 * cos(seq(pi/2, 3*pi/2, length.out = 500)),
+                                y = 6 * sin(seq(pi/2, 3*pi/2, length.out = 500))), aes(x = x, y = y),
+              inherit.aes = FALSE, color = "black", linewidth = 0.6, linetype = "dashed"),
     # Restricted arc
-    geom_path(data = data.frame(
-      x = rim_x + 4 * cos(seq(-pi/2, pi/2, length.out = 500)),
-      y = 4 * sin(seq(-pi/2, pi/2, length.out = 500))),
-      aes(x = x, y = y), inherit.aes = FALSE, color = "black", linewidth = 0.6),
+    geom_path(data = data.frame(x = rim_x + 4 * cos(seq(-pi/2, pi/2, length.out = 500)),
+                                y = 4 * sin(seq(-pi/2, pi/2, length.out = 500))), aes(x = x, y = y),
+              inherit.aes = FALSE, color = "black", linewidth = 0.6),
     # Rim
-    geom_path(data = data.frame(
-      x = rim_x + 0.75 * cos(seq(0, 2*pi, length.out = 500)),
-      y = 0.75 * sin(seq(0, 2*pi, length.out = 500))),
-      aes(x = x, y = y), inherit.aes = FALSE, color = "darkorange2", linewidth = 0.8))
+    geom_path(data = data.frame(x = rim_x + 0.75 * cos(seq(0, 2*pi, length.out = 500)),
+                                y = 0.75 * sin(seq(0, 2*pi, length.out = 500))), aes(x = x, y = y),
+              inherit.aes = FALSE, color = "darkorange2", linewidth = 0.8))
 }
 
 # Data Cleaning
-shots <- pbp |>
+shots <- pbp %>%
+  
+  # Filter to plays that have shooting coordinates
   filter(shooting_play == TRUE,
          !is.na(coordinate_x),
          !is.na(coordinate_y),
+         # Remove free throws
          !grepl("Free Throw", type_text),
-         season_type == 2) |>
-  select(athlete_id_1, coordinate_x, coordinate_y, score_value) |>
-  left_join(player_names, by = c("athlete_id_1" = "athlete_id")) |>
-  mutate(
-    x = ifelse(coordinate_x > 0,
-               -(coordinate_x - 46.75),
-               coordinate_x + 46.75),
-    y = ifelse(coordinate_x > 0, -coordinate_y, coordinate_y)) |>
-  filter(x <= 45) |>
-  select(athlete_display_name, score_value, x, y)
+         #Filter to the regular season
+         season_type == 2) %>%
+    
+  # Translate from player IDs to names
+  left_join(player_names, by = c("athlete_id_1" = "athlete_id")) %>%
+    
+  #Flip the data into being only one half of the court
+  mutate(team_name = ifelse(team_id == home_team_id,
+         paste(home_team_name, home_team_mascot), paste(away_team_name, away_team_mascot)),
+    x = ifelse(coordinate_x > 0, -(coordinate_x - 46.75), coordinate_x + 46.75),
+    y = ifelse(coordinate_x > 0, -coordinate_y, coordinate_y)) %>%
+  
+  # Get rid of heaves from beyond half court
+  filter(x <= 45) %>%
+    
+  # Narrow the columns again
+  select(athlete_display_name, team_name, score_value, x, y)
+
+  
+# Helper function to make the prediction grid
+make_pred_grid <- function() {
+  
+  # Make a grid of squares across the court
+  pred_grid <- expand.grid(
+    x = seq(0.5, 45.5, by = 1),
+    y = seq(-24.5, 25.5, by = 1)) %>%
+    as.data.frame() %>%
+    
+    # Calculate the distance from the rim of each point
+    mutate(dist_from_rim = sqrt((x - rim_x)^2 + y^2)) %>%
+    
+    # Filter to points that are within 5 feet of the three point line
+    filter(dist_from_rim <= three_pt_r + 5) %>%
+    select(x, y) %>%
+    as.data.frame()
+  
+  # Make the grid itself
+  coordinates(pred_grid) <- ~x+y
+  gridded(pred_grid) <- TRUE
+  pred_grid
+}
+
+# Helper function to make the bins for a team
+make_bins <- function(team, bin_size = 2, min_attempts = 10) {
+  
+  # Filter to only shot attempts from a specified team
+  team_shots %>%
+    filter(team_name == team) %>%
+    
+    # Create 2 ft x 2 ft bins across the court
+    mutate(
+      x_bin = floor(x / bin_size) * bin_size + bin_size / 2,
+      y_bin = floor(y / bin_size) * bin_size + bin_size / 2) %>%
+    group_by(x_bin, y_bin) %>%
+    
+    # Define the attempts, makes, and field goal percent of each bin
+    summarise(
+      attempts = n(),
+      makes = sum(score_value > 0),
+      fg_pct = makes / attempts,
+      .groups = "drop") %>%
+    
+    # Ensure the bin has enough attempts to be meaningful
+    filter(attempts >= min_attempts) %>%
+    
+    # Add characteristics of each bin like point value
+    mutate(
+      dist_from_rim = sqrt((x_bin - rim_x)^2 + y_bin^2),
+      is_three = dist_from_rim >= three_pt_r | (abs(y_bin) >= 22 & x_bin <= corner_x),
+      in_paint = x_bin <= paint_x & abs(y_bin) <= paint_y,
+      zone = case_when(
+        is_three ~ "Three",
+        in_paint ~ "Paint",
+        TRUE     ~ "Midrange")) %>%
+    as.data.frame()
+}
 ```
 
 ## Data Introduction
@@ -161,21 +226,21 @@ library(hoopR)
 pbp <- load_nba_pbp(seasons = 2026)
 player_box <- load_nba_player_box(seasons = 2026)
 
-player_names <- player_box |>
+player_names <- player_box %>%
   distinct(athlete_id, athlete_display_name)
 
-shots <- pbp |>
+shots <- pbp %>%
   filter(shooting_play == TRUE,
          !is.na(coordinate_x), !is.na(coordinate_y), !grepl("Free Throw", type_text),
-         season_type == 2) |>
-  select(athlete_id_1, coordinate_x, coordinate_y, score_value) |>
-  left_join(player_names, by = c("athlete_id_1" = "athlete_id")) |>
+         season_type == 2) %>%
+  select(athlete_id_1, coordinate_x, coordinate_y, score_value) %>%
+  left_join(player_names, by = c("athlete_id_1" = "athlete_id")) %>%
   mutate(
     x = ifelse(coordinate_x > 0,
                -(coordinate_x - 46.75),
                coordinate_x + 46.75),
-    y = ifelse(coordinate_x > 0, -coordinate_y, coordinate_y)) |>
-  filter(x <= 45) |>
+    y = ifelse(coordinate_x > 0, -coordinate_y, coordinate_y)) %>%
+  filter(x <= 45) %>%
   select(athlete_display_name, score_value, x, y)
 ```
 
@@ -184,46 +249,40 @@ shots <- pbp |>
 The data has been loaded and saved as csv for ease of access: \href{https://docs.google.com/spreadsheets/d/1uBDuThoKEiOK03TE7cipW_oFBo6iOxBon5RDeMG9lUI/edit?usp=sharing}{Click here} to access shots.csv. 
 \vspace{0.15cm}
 \begin{columns}
-\begin{column}{0.45\textwidth}
+\begin{column}{0.5\textwidth}
 
 Preview of the data
 \vspace{0.1cm}
 ```{r}
-shots |> 
-  head(20) |>
+# Look at the first 20 rows of the shots data
+shots %>% 
+  head(20) %>%
   knitr::kable(format = "latex", booktabs = TRUE)
 ```
 
 \end{column}
-\begin{column}{0.55\textwidth}
+\begin{column}{0.5\textwidth}
 
-NBA Regular Season Shot Locations (2025-26):
+\quad{}\quad{}\quad{}NBA 2025-26 Regular Season Heatmap
 \vspace{0.1cm}
 ```{r, fig.width=4, fig.height=2.33}
+# Make a plot of the NBA heatmap from the 2025-26 season
 ggplot(shots, aes(x = x, y = y)) +
-  stat_density_2d(
-    aes(fill = after_stat(density)),
-    geom = "raster",
-    contour = FALSE,
-    alpha = 0.9
-  ) +
+  stat_density_2d(aes(fill = after_stat(density)),geom = "raster",contour = FALSE,alpha = 0.9) +
+  
+  # Draw the court lines
   draw_court() +
   scale_fill_viridis_c() +
-  coord_fixed(
-    xlim = c(0, 45),
-    ylim = c(-25, 25),
-    expand = FALSE,
-    clip = "off"
-  ) +
-  labs(
-    title = "NBA Shot Locations",
-    x = "Distance from Basket (ft)",
-    y = "Court Width (ft)",
-    fill = "Density"
-  ) +
+  
+  #Establish the boundaries
+  coord_fixed(xlim = c(0, 45),ylim = c(-25, 25),expand = FALSE,clip = "off") +
+  
+  # Add axis labels
+  labs(title = "NBA Shot Locations",x = "Distance from Basket (ft)",y = "Court Width (ft)",fill = "Density") +
+  
+  # Adjust the plot positioning
   theme_minimal(base_size = 7) + 
-  theme(panel.grid = element_blank(),
-      plot.margin = margin(t = 2, r = 0, b = 0, l = -35))
+  theme(panel.grid = element_blank(), plot.margin = margin(t = 2, r = 0, b = 0, l = -50))
 ```
 \end{column}
 \end{columns}
@@ -232,99 +291,54 @@ ggplot(shots, aes(x = x, y = y)) +
 
 It is clear from the shot density layout on the previous slide that there are two main areas that teams take shots from:
 
-* the three point line
-* the rim
+\begin{itemize}
+  \item the three point line
+  \item the rim
+\end{itemize}
 
-This makes sense given that shots at the rim are likely to be high percentage and shots from three point range are worth more points. The middle area between these two hot zones is fairly empty, and the league has been trending to make midrange jumpshots even less a part of offenses in the Modern Era. All of this evolution is in the pursuit of offensive effiency which is where Kriging comes in.
+This makes sense given that shots at the rim are likely to be high percentage and shots from three point range are worth more points. The middle area between these two hot zones is fairly empty, and the league has been trending to make midrange jumpshots even less a part of offenses in the Modern Era. All of this evolution is in the pursuit of offensive efficiency which is where Kriging comes in.
 
 Since the shot map is made up of x and y data, it can be treated similarly to a geostatistics field from more typical Kriging -  it has high density areas and low gaps with a large number of very individualized spots. Kriging can be used to smooth over these less commonly attempted areas and give a picture of not only where teams shoot but how well they perform from these areas.
 
-Combining those two areas will mean that Kriging can make a points per shot estimation from every location on the floor which can then be used to check if teams are running their offenses to peak effiency.
+Combining those two areas will mean that Kriging can make a points per shot estimation from every location on the floor which can then be used to check if teams are running their offenses to peak efficiency.
 
 ## Attempt Frequency Kriging
 
 A typical picture of attempt frequency for a basketball team would consist of colored boxes or hexes that represent volume from each area of the court, but a custom Kriging can smooth this out into a continuous map using two foot by two foot bins.
 
 ```{r plot-attempts}
-team_shots <- pbp |>
-  filter(shooting_play == TRUE,
-         !is.na(coordinate_x),
-         !is.na(coordinate_y),
-         !grepl("Free Throw", type_text),
-         season_type == 2) |>
-  mutate(
-    team_name = ifelse(team_id == home_team_id,
-                       paste(home_team_name, home_team_mascot),
-                       paste(away_team_name, away_team_mascot)),
-    x = ifelse(coordinate_x > 0,
-               -(coordinate_x - 46.75),
-               coordinate_x + 46.75),
-    y = ifelse(coordinate_x > 0, -coordinate_y, coordinate_y)
-  ) |>
-  filter(x <= 45) |>
-  select(team_name, score_value, x, y)
+# Get the shots for a specific team
+team_shots <- shots %>% select(team_name, score_value, x, y)
 
+# Define a function to perform Kriging on the shot attempts of a team
 plot_attempts <- function(team) {
   
-  rim_x <- 5.25
-  three_pt_r <- 23.75
-  bin_size <- 2
-  min_attempts <- 10
-  
-  # Prediction grid
-  pred_grid <- expand.grid(
-    x = seq(0.5, 45.5, by = 1),
-    y = seq(-24.5, 25.5, by = 1)
-  ) |>
-    as.data.frame() |>
-    mutate(dist_from_rim = sqrt((x - rim_x)^2 + y^2)) |>
-    filter(dist_from_rim <= three_pt_r + 5) |>
-    select(x, y) |>
-    as.data.frame()
-  
-  coordinates(pred_grid) <- ~x+y
-  gridded(pred_grid) <- TRUE
-  
-  # Bin shots
-  attempt_bins <- team_shots |>
-    filter(team_name == team) |>
-    mutate(
-      x_bin = floor(x / bin_size) * bin_size + bin_size / 2,
-      y_bin = floor(y / bin_size) * bin_size + bin_size / 2
-    ) |>
-    group_by(x_bin, y_bin) |>
-    summarise(attempts = n(), .groups = "drop") |>
-    filter(attempts >= min_attempts) |>
-    as.data.frame()
-  
+  # Use helper functions to build correct bins
+  pred_grid <- make_pred_grid()
+  bins <- make_bins(team)
+  attempt_bins <- bins %>% select(x_bin, y_bin, attempts) %>% as.data.frame()
   coordinates(attempt_bins) <- ~x_bin+y_bin
   
-  # Krige
-  krig_attempts_auto <- suppressWarnings(
-    autoKrige(attempts ~ 1,
-              input_data = attempt_bins,
-              new_data = pred_grid)
-  )
+  # Run autoKrige on the shot attempts data
+  krig_attempts <- suppressWarnings(autoKrige(attempts ~ 1, input_data = attempt_bins, new_data = pred_grid))
   
-  krig_attempts_df <- as.data.frame(krig_attempts_auto$krige_output)
-  names(krig_attempts_df) <- c("x", "y", "attempts_pred", 
-                                "attempts_var", "attempts_stdev")
-  krig_attempts_df <- krig_attempts_df |>
-    mutate(attempts_pred = pmax(0, attempts_pred))
+  # Form a dataframe from the Kriging output
+  krig_attempts_df <- as.data.frame(krig_attempts$krige_output)
+  names(krig_attempts_df) <- c("x", "y", "attempts_pred", "attempts_var", "attempts_stdev")
+  krig_attempts_df <- krig_attempts_df %>% mutate(attempts_pred = pmax(0, attempts_pred))
   
-  # Plot
+  # Plot the output using helper functions
   ggplot(krig_attempts_df, aes(x = x, y = y, fill = attempts_pred)) +
     geom_raster(interpolate = TRUE) +
     draw_court() +
     scale_fill_viridis_c() +
     coord_fixed(xlim = c(0, 35), ylim = c(-25, 25)) +
-    labs(title = paste(team, "- Shot Attempts via Kriging"),
+    labs(title = paste(team, "- Shot Attempts"),
          x = "Distance from Basket (ft)",
          y = "Court Width (ft)",
          fill = "Attempts") +
     theme_minimal(base_size = 7) +
-    theme(panel.grid = element_blank(),
-      plot.margin = margin(t = 2, r = 0, b = 0, l = -3))
+    theme(panel.grid = element_blank(), plot.margin = margin(t = 2, r = 0, b = 0, l = -3))
 }
 ```
 \begin{columns}
@@ -349,71 +363,39 @@ plot_attempts("Detroit Pistons")
 While the Kriging for shot attempts is somewhat trivial, it is extremely useful for field goal percentage. This statistic leads to a map that has continuous values across all the bins and the maps will differ more greatly team-to-team.
 
 ```{r plot-percentage}
+# Define a function to perform Kriging on the field goal percentage of a team
 plot_fg_pct <- function(team) {
   
-  rim_x <- 5.25
-  three_pt_r <- 23.75
-  bin_size <- 2
-  min_attempts <- 10
-  
-  # Prediction grid
-  pred_grid <- expand.grid(
-    x = seq(0.5, 45.5, by = 1),
-    y = seq(-24.5, 25.5, by = 1)
-  ) |>
-    as.data.frame() |>
-    mutate(dist_from_rim = sqrt((x - rim_x)^2 + y^2)) |>
-    filter(dist_from_rim <= three_pt_r + 5) |>
-    select(x, y) |>
-    as.data.frame()
-  
-  coordinates(pred_grid) <- ~x+y
-  gridded(pred_grid) <- TRUE
-  
-  # Bin shots
-  fg_bins <- team_shots |>
-    filter(team_name == team) |>
-    mutate(
-      x_bin = floor(x / bin_size) * bin_size + bin_size / 2,
-      y_bin = floor(y / bin_size) * bin_size + bin_size / 2
-    ) |>
-    group_by(x_bin, y_bin) |>
-    summarise(
-      attempts = n(),
-      makes = sum(score_value > 0),
-      fg_pct = makes / attempts,
-      .groups = "drop"
-    ) |>
-    filter(attempts >= min_attempts) |>
-    as.data.frame()
-  
+  # Call helper functions to build the correct bins
+  pred_grid <- make_pred_grid()
+  bins <- make_bins(team)
+  fg_bins <- bins %>% select(x_bin, y_bin, fg_pct) %>% as.data.frame()
   coordinates(fg_bins) <- ~x_bin+y_bin
   
-  # Krige
-  krig_fg_auto <- suppressMessages(suppressWarnings(
-    autoKrige(fg_pct ~ 1,
-              input_data = fg_bins,
-              new_data = pred_grid)
-  ))
+  # Call autoKrige on the field goal percentage data
+  krig_fg_auto <- suppressMessages(suppressWarnings(autoKrige(fg_pct ~ 1, input_data = fg_bins, new_data = pred_grid)))
   
+  # Create a df from the Kriging output
   krig_fg_df <- as.data.frame(krig_fg_auto$krige_output)
   names(krig_fg_df) <- c("x", "y", "fg_pred", "fg_var", "fg_stdev")
   
-  # Return
-  return(list(plot = ggplot(krig_fg_df, aes(x = x, y = y, fill = fg_pred)) +
-    geom_raster(interpolate = TRUE) +
-    draw_court() +
-    scale_fill_viridis_c(labels = scales::percent,
-                         limits = c(0.20, 0.60),
-                         oob = scales::squish) +
-    coord_fixed(xlim = c(0, 35), ylim = c(-25, 25)) +
-    labs(title = paste(team, "- FG% via Kriging"),
-         x = "Distance from Basket (ft)",
-         y = "Court Width (ft)",
-         fill = "FG%") +
-    theme_minimal(base_size = 7) +
-    theme(panel.grid = element_blank(),
-      plot.margin = margin(t = 2, r = 0, b = 0, l = -3)), data = krig_fg_df))
+  # Return both a plot of the output and the data itself
+  return(list(
+    plot = ggplot(krig_fg_df, aes(x = x, y = y, fill = fg_pred)) +
+      geom_raster(interpolate = TRUE) +
+      draw_court() +
+      scale_fill_viridis_c(labels = scales::percent,
+                           limits = c(0.20, 0.60),
+                           oob = scales::squish) +
+      coord_fixed(xlim = c(0, 35), ylim = c(-25, 25)) +
+      labs(title = paste(team, "- FG%"),
+           x = "Distance from Basket (ft)",
+           y = "Court Width (ft)",
+           fill = "FG%") +
+      theme_minimal(base_size = 7) +
+      theme(panel.grid = element_blank(), plot.margin = margin(t = 2, r = 0, b = 0, l = -3)),
+    data = krig_fg_df,
+    krig = krig_fg_auto))
 }
 ```
 \begin{columns}
@@ -440,47 +422,41 @@ det_fg$plot
 As mentioned previously, points per shot is a metric that is used to determine the quality of a type of shot attempt. Now that the field goal percentage Kriging has supplied a likelihood of making a shot at any location on the floor, it is easy to take it a step further into point values of the shots.
 
 ```{r}
-plot_pps <- function(fg_data) {
+# Define a function to perform Kriging on the points per shot data
+plot_pps <- function(fg_data, team = "") {
   
-  rim_x <- 5.25
-  three_pt_r <- 23.75
-  corner_x <- rim_x + sqrt(three_pt_r^2 - 22^2)
-  
-  pps_df <- fg_data |>
-    mutate(
-      dist_from_rim = sqrt((x - rim_x)^2 + y^2),
+  # Define the number of points each shot is worth
+  fg_data %>%
+    mutate(dist_from_rim = sqrt((x - rim_x)^2 + y^2),
       is_three = dist_from_rim >= three_pt_r | (abs(y) >= 22 & x <= corner_x),
-      point_value = ifelse(is_three, 3, 2),
-      pps = fg_pred * point_value
-    )
-  
-  ggplot(pps_df, aes(x = x, y = y, fill = pps)) +
+      point_value = ifelse(is_three, 3, 2),pps = fg_pred * point_value) %>%
+    
+    # Plot the data using helper functions
+    ggplot(aes(x = x, y = y, fill = pps)) +
     geom_raster(interpolate = TRUE) +
     draw_court() +
-    scale_fill_viridis_c(limits = c(0.5, 2.0),
-                         oob = scales::squish) +
+    scale_fill_viridis_c(limits = c(0.5, 2.0), oob = scales::squish) +
     coord_fixed(xlim = c(0, 35), ylim = c(-25, 25)) +
-    labs(title = "Points Per Shot via Kriging",
+    labs(title = paste(team, "- Points per Shot"),
          x = "Distance from Basket (ft)",
          y = "Court Width (ft)",
          fill = "PPS") +
     theme_minimal(base_size = 7) +
-    theme(panel.grid = element_blank(),
-      plot.margin = margin(t = 2, r = 0, b = 0, l = -3))
+    theme(panel.grid = element_blank(), plot.margin = margin(t = 2, r = 0, b = 0, l = -3))
 }
 ```
 \begin{columns}
 \begin{column}{0.5\textwidth}
 
 ```{r bos-pps-plot, fig.width=2.5, fig.height=2.5, warning=FALSE, results='hide'}
-plot_pps(bos_fg$data)
+plot_pps(bos_fg$data, "Boston Celtics")
 ```
 
 \end{column}
 \begin{column}{0.5\textwidth}
 
 ```{r det-pps-plot, fig.width=2.5, fig.height=2.5, warning=FALSE, results='hide'}
-plot_pps(det_fg$data)
+plot_pps(det_fg$data, "Detroit Pistons")
 ```
 
 \end{column}
@@ -494,17 +470,288 @@ One of the main advantages that these plots provide is the way they make it much
 
 \begin{columns}
 \begin{column}{0.5\textwidth}
-The plot makes it hard tell whether there's smaller deviations within the large groups, doesn't calculate the point values of the shots (i.e. shooting 50\% from 2 is the same as 33\% from 3).
+The plot makes it hard to tell whether there's smaller deviations within the large group and doesn't calculate the point values of the shots (i.e. shooting 50\% from 2 is the same as 33\% from 3). Thus it is generally not very insightful about which shots are the most efficient, only offering general statistics about which areas the team has shot the most accurately from.
 \end{column}
 \begin{column}{0.5\textwidth}
-\includegraphics[width=\linewidth]{"C:/Users/bwdea/OneDrive/Pictures/Screenshots/Screenshot 2026-04-21 173823.png"}
+\includegraphics[width=\linewidth]{"Synergy Shot Chart.png"}
 \end{column}
 \end{columns}
 
 ## Kriging Comparison
 
+A smooth chart from Kriging much better captures the specific peaks and valleys of the shooting percentage and factoring in the point values gives real, actionable insights. Combining this with the shots attempted map can make it easy for a coach without a statistical background to see mismatches in shot value and frequency without complex interpretation.
+
+Running through every NBA team can make some interesting comparisons:
+
+```{r, eval=FALSE, echo=TRUE}
+plot_team_impact <- function(team_name) {
+   fg_obj <- plot_fg_pct(team_name)
+   attempts_plot <- plot_attempts(team_name)
+   pps_plot <- plot_pps(fg_obj$data)
+   attempts_plot | pps_plot
+}
+
+nba_teams <- sort(unique(team_shots$team_name))
+
+for (tm in nba_teams) {
+   print(plot_team_impact(tm))
+}
+```
+
+## Team Takeaways
+
+```{r, fig.width=3, fig.height=3, warning=FALSE, results='hide'}
+# Interesting comparisons
+cle <- plot_fg_pct("Cleveland Cavaliers")$data
+
+
+# Interesting side-to-side plots
+ind <- plot_fg_pct("Indiana Pacers")$data
+den <- plot_fg_pct("Denver Nuggets")$data
+```
+
+Some teams could gain insights by looking at their charts side-by-side, like the Cleveland Cavaliers
+
+\begin{columns}
+\begin{column}{0.5\textwidth}
+```{r cle-attempts-plot, fig.width=2.5, fig.height=2.5, warning=FALSE, results='hide'}
+plot_attempts("Cleveland Cavaliers")
+```
+\end{column}
+\begin{column}{0.5\textwidth}
+```{r cle-pps-plot, fig.width=2.5, fig.height=2.5, warning=FALSE, results='hide'}
+plot_pps(cle, "Cleveland Cavaliers")
+```
+\end{column}
+\end{columns}
+
+## Points per Shot Patterns
+
+Some teams also have clear patterns that favor shooting from one side of the floor
+
+\begin{columns}
+\begin{column}{0.5\textwidth}
+```{r ind-pps-plot, fig.width=2.5, fig.height=2.5, warning=FALSE, results='hide'}
+plot_pps(ind, "Indiana Pacers")
+```
+\end{column}
+\begin{column}{0.5\textwidth}
+```{r den-pps-plot, fig.width=2.5, fig.height=2.5, warning=FALSE, results='hide'}
+plot_pps(den, "Denver Nuggets")
+```
+\end{column}
+\end{columns}
+
 ## Accuracy of Predictions
 
-## Conclusions \& Kriging Limitations
+Of course, the predicted maps are only useful if they are accurate. So how well did Kriging do with smoothing the shooting data?
+
+```{r}
+# Define a function to show the accuracy of the Kriging predictions
+plot_accuracy <- function(team) {
+  
+  # Call the helper functions
+  bins <- make_bins(team)
+  krig_fg_df <- plot_fg_pct(team)$data
+  
+  # Adjust the bins to match the real data
+  bins %>%
+    mutate(x_snap = round((x_bin - 0.5)) + 0.5, y_snap = round((y_bin - 0.5)) + 0.5) %>%
+    left_join(krig_fg_df, by = c("x_snap" = "x", "y_snap" = "y")) %>%
+    filter(!is.na(fg_pred)) %>%
+    
+    # Make a plot of the accuracy
+    ggplot(aes(x = fg_pct, y = fg_pred, color = zone, size = attempts)) +
+    geom_point(alpha = 0.75) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "grey40", linewidth = 0.6) +
+    
+    # Color code the plot by shot type
+    scale_color_manual(values = c("Paint" = "#C0392B", "Midrange" = "#F39C12", "Three" = "#2471A3")) +
+    scale_size_continuous(range = c(1, 5), guide = "none") +
+    scale_x_continuous(labels = scales::percent, limits = c(0.15, 0.85)) +
+    scale_y_continuous(labels = scales::percent, limits = c(0.15, 0.85)) +
+    
+    # Add labels
+    labs(title = paste(team, "- Kriging Accuracy"), x = "Actual FG%", y = "Kriging Predicted FG%", color = "Zone") +
+    
+    # Adjust the positioning of the plot
+    theme_minimal(base_size = 7) +
+    theme(panel.grid = element_blank(), plot.margin = margin(t = 2, r = 0, b = 0, l = 2))
+}
+```
+
+\begin{columns}
+\begin{column}{0.5\textwidth}
+```{r bos-acc-plot, fig.width=2.75, fig.height=2.4, warning=FALSE, results='hide'}
+plot_accuracy("Boston Celtics")
+```
+\end{column}
+\begin{column}{0.5\textwidth}
+```{r det-acc-plot, fig.width=2.75, fig.height=2.4, warning=FALSE, results='hide'}
+plot_accuracy("Detroit Pistons")
+```
+\end{column}
+\end{columns}
+
+## Kriging Limitations
+
+```{r}
+# Define a function to plot the field goal percentage Kriging of a specific player
+plot_fg_pct_player <- function(player) {
+  
+  # Define a fully expanded half court grid for the players
+  pred_grid <- expand.grid(x = seq(0.5, 45.5, by = 1),y = seq(-24.5, 25.5, by = 1)) %>%
+    as.data.frame() %>% select(x, y) %>% as.data.frame()
+  coordinates(pred_grid) <- ~x+y
+  gridded(pred_grid) <- TRUE
+  
+  # Re-define the bins to match this new grid
+  fg_bins <- shots %>%
+    filter(athlete_display_name == player) %>%
+    mutate(x_bin = floor(x / bin_size) * bin_size + bin_size / 2,
+      y_bin = floor(y / bin_size) * bin_size + bin_size / 2) %>%
+    group_by(x_bin, y_bin) %>%
+    summarise(
+      attempts = n(),
+      makes = sum(score_value > 0),
+      fg_pct = makes / attempts,
+      .groups = "drop") %>%
+    filter(attempts >= 3) %>%
+    as.data.frame()
+  coordinates(fg_bins) <- ~x_bin+y_bin
+  
+  # Run Kriging on the individual field goal percentage data
+  krig_fg <- suppressMessages(suppressWarnings(autoKrige(fg_pct ~ 1, input_data = fg_bins, new_data = pred_grid)))
+  
+  # Form a data frame on the Kriging output
+  krig_fg_df <- as.data.frame(krig_fg$krige_output)
+  names(krig_fg_df) <- c("x", "y", "fg_pred", "fg_var", "fg_stdev")
+  
+  # Plot the data the same way as the teams were done
+  ggplot(krig_fg_df, aes(x = x, y = y, fill = fg_pred)) +
+    geom_raster(interpolate = TRUE) +
+    draw_court() +
+    scale_fill_viridis_c(labels = scales::percent,limits = c(0.20, 0.60),oob = scales::squish) +
+    coord_fixed(xlim = c(0, 45), ylim = c(-25, 25)) +
+    labs(title = paste(player, "- FG% Kriging (min FGA = 3)"),
+         x = "Distance from Basket (ft)",
+         y = "Court Width (ft)",
+         fill = "FG%") +
+    theme_minimal(base_size = 7) +
+    theme(panel.grid = element_blank(), plot.margin = margin(t = 1, r = 0, b = 0, l = 3))
+}
+```
+
+Kriging has 2 major limitations: sparse data and giant data. The giant data problem is avoided for this case by filtering out all of the free throws and plays that did not result in a shot attempt from the large play-by-play dataset, but slight manual adjustments had to be made for sparse data:
+
+\begin{columns}
+\begin{column}{0.5\textwidth}
+
+This plot of Stephen Curry's individual FG\% Kriging from last season makes it clear that having too little data can be a problem as well. Not only are the bins that have enough shots to analyze somewhat blocky, but the areas where there are no data have been pulled towards the global mean which is obviously unreasonable given the context.
+
+This emphasizes that Kriging is far better at interpolation than extrapolation.
+
+\end{column}
+\begin{column}{0.5\textwidth}
+```{r curry-fg-plot, fig.width=2.8, fig.height=2.4, warning=FALSE, results='hide'}
+plot_fg_pct_player("Stephen Curry")
+```
+\end{column}
+\end{columns}
+
+## Conclusions
+
+\begin{columns}
+\begin{column}{0.5\textwidth}
+
+A plot of the residuals from the predictions against the distance from the basket of the shots gives some insights about how Kriging outputs tend to work - the model underpredicted the almost outlier-like high percentages on dunks and layups near the basket, was most wild for the midrange where the data is far more sparse and inconsistent, and then was fairly tight and accurate for three point shots.
+
+This means that NBA teams could have the most confidence in conclusions related to threes but should perhaps be careful when making broad conclusions about midrange shots based on the Kriging technique.
+
+\end{column}
+\begin{column}{0.5\textwidth}
+```{r nba-acc-plot, fig.width=3, fig.height=2.5, warning=FALSE, results='hide'}
+# Call the helper function for the grid and bins back to normal size
+pred_grid <- make_pred_grid()
+bins <- team_shots %>%
+  mutate(x_bin = floor(x / bin_size) * bin_size + bin_size / 2,
+    y_bin = floor(y / bin_size) * bin_size + bin_size / 2) %>%
+  group_by(x_bin, y_bin) %>%
+  
+  # Calculate the makes, attempts, and field goal percentage of each bin
+  summarise(
+    attempts = n(),
+    makes = sum(score_value > 0),
+    fg_pct = makes / attempts,
+    .groups = "drop") %>%
+  
+  # Make sure there is enough attempts in each bin (easy for whole NBA)
+  filter(attempts >= min_attempts) %>%
+  
+  # Calculate the distance and point value of each bin
+  mutate(
+    dist_from_rim = sqrt((x_bin - rim_x)^2 + y_bin^2),
+    is_three = dist_from_rim >= three_pt_r | (abs(y_bin) >= 22 & x_bin <= corner_x),
+    in_paint = x_bin <= paint_x & abs(y_bin) <= paint_y,
+    zone = case_when(
+        is_three ~ "Three",
+      in_paint ~ "Paint",
+      TRUE     ~ "Midrange")) %>%
+  as.data.frame()
+fg_bins <- bins %>% select(x_bin, y_bin, fg_pct) %>% as.data.frame()
+coordinates(fg_bins) <- ~x_bin+y_bin
+
+# Run Kriging on the league wide field goal percentage data
+krig_fg <- suppressMessages(suppressWarnings(autoKrige(fg_pct ~ 1, input_data = fg_bins, new_data = pred_grid)))
+
+# Make a dataframe of the Kriging output
+krig_fg_df <- as.data.frame(krig_fg$krige_output)
+names(krig_fg_df) <- c("x", "y", "fg_pred", "fg_var", "fg_stdev")
+
+# Snap the bins to align them again
+bins %>%
+  mutate(
+    x_snap = round((x_bin - 0.5)) + 0.5,
+    y_snap = round((y_bin - 0.5)) + 0.5
+  ) %>%
+  left_join(krig_fg_df, by = c("x_snap" = "x", "y_snap" = "y")) %>%
+  filter(!is.na(fg_pred)) %>%
+  
+  # Calculate the residual at each bin
+  mutate(residual = fg_pct - fg_pred) %>%
+  
+  # Plot the reisudals against shot distance
+  ggplot(aes(x = dist_from_rim, y = residual, color = zone, size = attempts)) +
+  geom_point(alpha = 0.75) +
+  geom_hline(yintercept = 0, linetype = "dashed",
+             color = "grey40", linewidth = 0.6) +
+  
+  # Color the data by shot type
+  scale_color_manual(values = c("Paint" = "#C0392B", "Midrange" = "#F39C12", "Three" = "#2471A3")) +
+  scale_size_continuous(range = c(1, 5), guide = "none") +
+  scale_y_continuous(labels = scales::percent) +
+  
+  # Add labels
+  labs(title = "NBA - Residuals vs. Distance",
+       x = "Distance from Basket (ft)",
+       y = "Actual - Predicted FG%",
+       color = "Zone") +
+  
+  # Adjust the positioning on the plot
+  theme_minimal(base_size = 7) +
+  theme(panel.grid = element_blank(), plot.margin = margin(t = 2, r = 0, b = 0, l = 2))
+```
+\end{column}
+\end{columns}
 
 ## References
+
+\href{https://www.paulamoraga.com/book-spatial/kriging.html}{https://www.paulamoraga.com/book-spatial/kriging.html}
+
+\href{https://www.publichealth.columbia.edu/research/population-health-methods/kriging-interpolation}{https://www.publichealth.columbia.edu/research/population-health-methods/kriging-interpolation}
+
+\href{https://www.youtube.com/watch?v=dfSMGJFRL1U}{https://www.youtube.com/watch?v=dfSMGJFRL1U}
+
+\href{https://www.youtube.com/watch?v=ZRyiBKvqjJM}{https://www.youtube.com/watch?v=ZRyiBKvqjJM}
+
+\href{https://link.springer.com/article/10.1007/s00180-024-01564-4}{https://link.springer.com/article/10.1007/s00180-024-01564-4}
