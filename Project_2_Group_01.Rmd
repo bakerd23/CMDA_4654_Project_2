@@ -65,6 +65,151 @@ knitr::knit_hooks$set(chunk = function(x, options) {
 })
 ```
 
+
+## Kriging - Overview
+
+\begin{columns}
+\begin{column}{0.55\textwidth}
+
+\underline{Goal:} \\
+- To estimate data values $Z^*(x_0)$ at unknown locations based on the given data $Z(x_i)$, for $i = 1, \dots, n$, where $n$ is the number of locations where data is observed. \\
+- In mathematical terms,
+\begin{align*}
+Z^*(x_0) = \sum_{i=1}^n \lambda_i Z(x_i) = \mathbf{\lambda}^T \mathbf{z}
+\end{align*}
+\vspace{0.5em}
+
+\underline{Idea:} \\
+- An observation will be more similar to data that is "close" in space comparative to those "far" in space.
+\vspace{1.5em}
+
+"Closeness" will be determined by the spatial correlation between points in the given field of data.
+
+\end{column}
+\begin{column}{0.45\textwidth}
+
+\includegraphics[width=\linewidth]{"C:/Users/mgsmi/Documents/Spring2026/CMDA_4654/P2/dummy image - cmda4654 p2.png"}
+
+\end{column}
+\end{columns}
+
+
+
+
+
+## The Kriging Model
+
+\underline{Generic Model:}
+\begin{align*}
+Z(x) &= \mu(x) + \epsilon(x)
+\end{align*}
+$\epsilon(x)$ is assumed to have a zero mean and a corresponding variogram model with function $C(x_i, x_j)$. This is also notated as $C(\mathbf{h})$, where $\mathbf{h}$ is the difference vector between two locations $x_i$ and $x_j$. \
+\vspace{1em}
+Note: This assumes that the variation in the data is a function of the distance between points.
+\vspace{1em}
+
+There are a handful of different types of Kriging but we will be focusing on *Ordinary Kriging*. \
+\vspace{1.5em}
+Ordinary Kriging assumes an unknown stationary mean. That is, the mean of the response variable is independent of location. This simplifies the above model to:
+\begin{align*}
+Z(x) = \mu + \epsilon(x)
+\end{align*}
+Additionally, we assume isotropy; any pair of locations that are the same distance from each other, regardless of direction, have the same spatial correlation.
+
+## Solving for the Kriging Weights
+
+To solve for the weights, $\lambda_i$ in
+$$Z^*(x_0) = \sum_{i=1}^n \lambda_i Z(x_i),$$
+To estimate the weights $lambda_i$ is equivalent to finding the $lambda_i$ that minimizes the error variance  
+$$\text{min} \ \sigma^2_e = \text{min }\text{Var}\left[ Z(x) - Z^*(x) \right]$$
+such that the estimator is unbiased, i.e. $\text{E}\big[Z(x) - Z^*(x)\big] = 0$. (This is satisfied by assuming a stationary mean.) \
+So, the weights are constrained to satisfy
+$$\sum_{i=1} ^n \lambda_i = 1  \hspace{1em}  \text{ or } \hspace{1em} \mathbf{\lambda}^T \mathbf{1} = 1$$
+and we are able to express the minimization problem as,
+$$\text{min} \ \sigma^2_e = \text{min }E \big[ (Z(x) - Z^*(x))^2 \big]$$
+
+To solve this constrained optimization problem, the method of Lagrange multiplier is used.
+
+## Solving for the Kriging Weights (cont'd)
+
+Not all proof steps are shown, but a thorough reference \href{http://www.stat.ucla.edu/~nchristo/statistics_c173_c273/c173c273_ordinary_kriging_using_covariance.pdf}{here} provides a clear explanation. \
+\vspace{0.5em}
+After some algebraic manipulation, we arrive at minimizing
+\begin{align*}
+&C(0) - 2 \sum_{i=1}^n \lambda_i C(x_0, x_i) + \sum_{i=1}^n \sum_{j=1}^n \lambda_i \lambda_j C(x_i, x_j) -2 \Lambda \left( \sum_{i=1}^n \lambda_i - 1 \right)\\
+&= \mathbf{c_0} - 2 \mathbf{\lambda}^T \mathbf{c_{x_0}} + \mathbf{\lambda}^T \mathbf{C} \mathbf{\lambda} - 2 \Lambda \left( \mathbf{\lambda}^T \mathbf{1} - \mathbf{1} \right)
+\end{align*}
+by taking the partial derivatives with respect to the $\lambda_i$'s (or vector $\mathbf{\lambda}$) and then the lagrange multiplier $\Lambda$. \
+\vspace{0.5em}
+The solution results in solving the system
+\begin{align*}
+\begin{bmatrix}
+C(x_1, x_1) & C(x_1, x_2) & C(x_1, x_3)  & \cdots & C(x_1, x_n) & 1 \\
+C(x_2, x_1) & C(x_2, x_2) & C(x_2, x_3)  & \cdots & C(x_2, x_n) & 1 \\
+C(x_3, x_1) & C(x_3, x_2) & C(x_3, x_3)  & \cdots & C(x_3, x_n) & 1 \\
+\vdots &      \vdots &         & \ddots           &         & 1 \\
+C(x_n, x_1) & C(x_n, x_2) & C(x_n, x_3)  & \cdots & C(x_n, x_n) & 1 \\
+1 & 1 & 1  & \cdots & 1 & 0
+\end{bmatrix}
+\begin{bmatrix}
+\lambda_1 \\ \lambda_2 \\ \lambda_3 \\ \vdots \\ \lambda_n \\ \Lambda   
+\end{bmatrix} 
+ = 
+ \begin{bmatrix}
+ C(x_0, x_1) \\  C(x_0, x_2) \\  C(x_0, x_3) \\ \vdots \\  C(x_0, x_n) \\ 1 
+ \end{bmatrix} \hspace{1em}
+\end{align*}
+
+
+
+## Solving for the Kriging Weights (cont'd)
+
+The system given on the previous slide can be equivalently expressed as
+\begin{align*}
+\begin{bmatrix} \mathbf{C} & \mathbf{1} \\ \mathbf{1}^T & 0 \end{bmatrix} \begin{bmatrix} \mathbf{\lambda} \\ \Lambda \end{bmatrix} = \begin{bmatrix} \mathbf{c}_0 \\ 0 \end{bmatrix}
+\end{align*}
+And solved by simply inverting the matrix on the left hand side. \
+\vspace{0.5em}
+This matrix will be *in theory* invertible. The function $C(x_i, x_j)$ arises from variogram modeling, which uses conditionally negative definite functions. Mathematical depth aside, this class of functions will produce a positive definite matrix (which is invertible). \
+Note: As $n$ becomes large, the dimensions of the matrix could cause it to become ill-conditioned.\
+\vspace{0.5em}
+After solving for the kriging weights, we can find the error variance of our estimate $Z^*(x_0)$ as
+\begin{align*}
+\sigma^2_e = C(0) + \sum_{i=1}^n \lambda_i C(x_0, x_i) + \Lambda
+\end{align*}
+
+## Variogram Model
+
+We previously assumed that the spatial covariance can be modeled with a variogram function $2\gamma(\mathbf{h})$, or equivalently a semivariogram function $\gamma(\mathbf{h})$. (Though in spatial statistics these two terms are sometimes used interchangeably.)  \
+In either case, we seek a function that describes the spatial covariance for the distance between two points. \
+
+This is achieved by first obtaining a *sample variogram* that is described by
+\begin{align*}
+2 \widehat{\gamma} (\mathbf{h}) = \frac{1}{\left| N_{ \mathbf{h}}\right|} \sum_{N_{\mathbf{h}}} \left( Z(x_i) - Z(x_j) \right)^2
+\end{align*}
+where $\left| N_{ \mathbf{h}}\right|$ is the number of unique pairs in the set defined as
+\begin{align*}
+N_{ \mathbf{h}} := \left\{ (x_i, x_j) : | x_i - x_j| = h \right\} \text{ for } i, j = 1, \dots, n
+\end{align*}
+
+That is, we obtain $k$ discrete set of points with distances $h$ and corresponding average of variances $2\widehat{\gamma}(\mathbf{h})$.
+
+
+## Variogram Model (cont'd)
+
+Last, a variogram model is fit to the sample variogram. The optimal variogram will minimize the sum of squared error given by
+\begin{align*}
+\sum_{i=1}^k \big( 2 \widehat{\gamma}(\mathbf{h}) - 2 \gamma(\mathbf{h}, \alpha )\big)^2
+\end{align*}
+Where $\alpha$ is used to denote parameters of the variogram model. \
+\vspace{1.5em}
+For example one type of model is a spherical semivariogram. Here, the parameters are the "nugget", "partial sill" and "range" in geospatial statistic terms. Equivalently, these dictate the y-intercept, the difference in the maximum covariance and the y-intercept and the distance between the 0 and where the maximum covariance is reached. \
+\vspace{1.5em}
+Once a model has been fit, this function can be used to determine the values of $C(x_i, x_j)$ in the matrix $\begin{bmatrix} \mathbf{C} & \mathbf{1} \\ \mathbf{1}^T & 0 \end{bmatrix}$ and that of $C(x_0, x_i)$ in the vector $\begin{bmatrix} \mathbf{c}_0 \\ 0 \end{bmatrix}$.
+
+
+
+
 ```{r load-nba-data, cache=TRUE, include=FALSE}
 # Read in NBA play-by-play data for the 2025-26 season
 pbp <- load_nba_pbp(seasons = 2026)
