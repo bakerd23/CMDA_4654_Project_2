@@ -203,8 +203,8 @@ Last, a variogram model is fit to the sample variogram. The optimal variogram wi
 \end{align*}
 Where $\alpha$ is used to denote parameters of the variogram model. \
 \vspace{1.5em}
-For example one type of model is a spherical semivariogram. Here, the parameters are the "nugget", "partial sill" and "range" in geospatial statistic terms. Equivalently, these dictate the y-intercept, the difference in the maximum covariance and the y-intercept and the distance between the 0 and where the maximum covariance is reached. \
-\vspace{1.5em}
+For example one type of model is a spherical semivariogram. Here, the parameters are the "nugget", "partial sill" and "range" in geospatial statistic terms. Equivalently, these dictate the y-intercept, the difference in the maximum covariance and the y-intercept and the distance between the origin and where the maximum covariance is reached. \
+\vspace{1em}
 Once a model has been fit, this function can be used to determine the values of $C(x_i, x_j)$ in the matrix $\begin{bmatrix} \mathbf{C} & \mathbf{1} \\ \mathbf{1}^T & 0 \end{bmatrix}$ and that of $C(x_0, x_i)$ in the vector $\begin{bmatrix} \mathbf{c}_0 \\ 0 \end{bmatrix}$.
 
 
