@@ -1,7 +1,7 @@
 ---
 title: "Kriging in Sports"
-subtitle: "CMDA-4654 Project 2"
-author: "Group 1 | Baker Dean, Toshaani Dewan, Nick Fitti, Nico Ottobre, Margaret Smith"
+subtitle: "CMDA 4654 Project 2 - Group 1"
+author: "Baker Dean, Toshaani Dewan, Nick Fitti, Nico Ottobre, Margaret Smith"
 date: "April 2026"
 fontsize: 9pt
 classoption: "aspectratio=169"
