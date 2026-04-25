@@ -784,16 +784,16 @@ mapview(quakes_kriged,
 **Limitations**
 
 \begin{itemize}
-  \item -Large areas with few data points tend to get pulled towards the global mean
-  \item -Extreme values have been "weakened" and pulled closer to the global mean
-  \item -Earthquakes have high variability when it comes to their magnitude
+  \item Large areas with few data points tend to get pulled towards the global mean
+  \item Extreme values have been "weakened" and pulled closer to the global mean
+  \item Earthquakes have high variability when it comes to their magnitude
 \end{itemize}
 
 $~$
 
 **Conclusion**
 
-Our results give a decent idea of the general magnitude of earthquakes in areas we have data points for, but isn't great for predicting the exact magnitude due to over smoothing and it also struggles with predicting the magnitude in areas that lack data points. This example shows the importance of selecting your prediction area with intention. Kriging prefers smaller and more tight data, so trying make predictions over a large area is going to result in over smoothing. This could be improved by taking a smaller grid in a specific area of interest or by making the grid a more unique shape that follows the shape of the data.
+Our results give a decent idea of the general magnitude of earthquakes in areas we have data points for, but isn't great for predicting the exact magnitude and it also struggles with predicting the magnitude in areas that lack data points. This highlights the idea that kriging is suited more towards interpolation rather than extrapolation. Kriging prefers smaller and more tight data, so trying make predictions over a large area is going to result in over smoothing. This could be improved in this example by taking a smaller grid in a specific area of interest or by making the grid a more unique shape that follows the shape of the data rather than trying to get estimates for areas where we have no data points.
 
 
 ```{r load-nba-data, cache=TRUE, include=FALSE}
