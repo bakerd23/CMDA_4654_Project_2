@@ -88,7 +88,7 @@ Z^*(x_0) = \sum_{i=1}^n \lambda_i Z(x_i) = \mathbf{\lambda}^T \mathbf{z}
 \end{column}
 \begin{column}{0.45\textwidth}
 
-\includegraphics[width=\linewidth]{"C:/Users/mgsmi/Documents/Spring2026/CMDA_4654/P2/dummy image - cmda4654 p2.png"}
+\includegraphics[width=\linewidth]{"dummy image - cmda4654 p2.png"}
 
 \end{column}
 \end{columns}
