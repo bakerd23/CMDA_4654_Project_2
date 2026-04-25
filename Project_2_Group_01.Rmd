@@ -64,7 +64,317 @@ knitr::knit_hooks$set(chunk = function(x, options) {
   paste0("\n \\", "footnotesize","\n\n", x, "\n\n \\normalsize")
 })
 ```
+## Spatial / Geostatistical Data
 
+\vspace{0.35cm}
+
+\textbf{What is spatial data?}
+
+\begin{itemize}
+\item Observations collected at specific locations
+\item Each point has coordinates $(x,y)$ and a measured value $Z(x)$
+\item Location matters because nearby points often behave similarly
+\item Values may change across space rather than randomly
+\end{itemize}
+
+
+\textbf{Key Idea: Spatial Dependence}
+
+\begin{itemize}
+\item Points close together tend to have more similar values
+\item Points farther apart tend to be less related
+\item This relationship can be modeled statistically
+\end{itemize}
+
+\vspace{0.3cm}
+
+\centering
+\Large
+Nearby $\Rightarrow$ Similar
+
+\vspace{0.25cm}
+
+Farther Away $\Rightarrow$ Less Similar
+
+\vspace{0.30cm}
+
+\normalsize
+\textbf{This motivates interpolation methods such as Kriging.}
+
+
+## What is Kriging?
+
+\vspace{0.35cm}
+
+\textbf{Definition}
+
+\begin{itemize}
+\item Kriging is a geostatistical interpolation method
+\item Estimates values at unknown locations using nearby observed data
+\item Uses both distance and spatial correlation between points
+\item Provides prediction uncertainty
+\end{itemize}
+
+\vspace{0.25cm}
+
+\begin{columns}[T]
+
+\begin{column}{0.50\textwidth}
+
+\textbf{Estimator}
+
+\[
+Z^*(x_0)=\sum_{i=1}^{n}\lambda_i Z(x_i)
+\]
+
+\begin{itemize}
+\item $Z(x_i)$ = known observations
+\item $\lambda_i$ = optimal weights
+\item $Z^*(x_0)$ = predicted value
+\item $n$ = number of points used
+\end{itemize}
+
+\end{column}
+
+\begin{column}{0.50\textwidth}
+
+\textbf{Core Idea}
+
+\begin{itemize}
+\item Closer points receive more weight
+\item Farther points receive less weight
+\item Weights are chosen optimally to improve prediction accuracy
+\end{itemize}
+
+\vspace{0.40cm}
+
+\centering
+\Large
+Near $\Rightarrow$ More Influence \\[0.35cm]
+Far $\Rightarrow$ Less Influence
+
+\end{column}
+
+\end{columns}
+
+## Motivation for Kriging
+
+\vspace{0.2cm}
+
+\textbf{Why was Kriging developed?}
+
+\begin{itemize}
+\item Developed in the 1950s by South African mining engineer Danie Krige
+\item Created to estimate gold grades from limited borehole samples/estimate ore concentrations in unsampled regions
+\item Later formalized mathematically by Georges Matheron
+\item Designed to improve prediction accuracy over simpler methods
+\end{itemize}
+
+\vspace{0.35cm}
+
+\begin{columns}[T]
+
+\begin{column}{0.48\textwidth}
+
+\textbf{Why do we need it?}
+
+\begin{itemize}
+\item Real-world data is often sparse, time-consuming or expensive to collect
+\item Measuring every location is impractical
+\item Need reliable estimates between sampled points
+\item Need uncertainty measures for decision-making
+\end{itemize}
+
+\end{column}
+
+\begin{column}{0.48\textwidth}
+
+\textbf{What is the goal?}
+
+\begin{itemize}
+\item Predict unknown values using nearby observations
+\item Use spatial autocorrelation efficiently
+\item Reduce bias in predictions
+\item Minimize prediction error variance
+\end{itemize}
+
+\end{column}
+
+\end{columns}
+
+## Motivation for Kriging (cont.)
+
+\vspace{0.3cm}
+
+\textbf{When is Kriging a Good Choice?}
+
+\begin{itemize}
+\item Data has geographic or location-based patterns
+\item Nearby points are likely related
+\item Only limited observations are available
+\item Accurate interpolation is needed between sampled locations
+\item Prediction uncertainty is important for decisions
+\end{itemize}
+
+\vspace{0.55cm}
+
+\centering
+\Large
+Spatial Data + Limited Samples $\Rightarrow$ Kriging
+
+## Common Applications of Kriging
+
+\vspace{0.35cm}
+
+\begin{columns}[T]
+
+\begin{column}{0.48\textwidth}
+
+\textbf{Environmental \& Earth Sciences}
+
+\begin{itemize}
+\item Rainfall and temperature mapping
+\item Air pollution estimation
+\item Soil quality / agriculture mapping
+\item Groundwater and hydrogeology
+\item Oil, gas, and mineral exploration
+\end{itemize}
+
+\vspace{0.35cm}
+
+\textbf{Modern Analytics}
+
+\begin{itemize}
+\item Public health risk mapping
+\item Urban planning
+\item Astronomy data interpolation
+\end{itemize}
+
+\end{column}
+
+\begin{column}{0.48\textwidth}
+
+\textbf{Engineering \& Industry}
+
+\begin{itemize}
+\item Real estate valuation
+\item Circuit design optimization
+\item Resource planning
+\end{itemize}
+
+\vspace{0.35cm}
+
+\textbf{Remote Sensing}
+
+\begin{itemize}
+\item Filling missing spatial data
+\item Surface prediction from satellite data
+\end{itemize}
+
+\vspace{0.35cm}
+
+\textbf{Sports Analytics}
+
+\begin{itemize}
+\item Shot efficiency by location
+\item Court / field heat maps
+\item Player movement zones
+\end{itemize}
+
+\end{column}
+
+\end{columns}
+
+## Variations of Kriging
+
+\vspace{0.25cm}
+
+\textit{Several Kriging methods exist depending on assumptions about the mean and spatial trend.}
+
+\vspace{0.35cm}
+
+\begin{columns}[T]
+
+\begin{column}{0.48\textwidth}
+
+\textbf{Most Common Types}
+
+\begin{itemize}
+\item \textbf{Simple Kriging}  
+Known constant mean
+
+\item \textbf{Ordinary Kriging}  
+Unknown but constant mean
+
+\item \textbf{Universal Kriging}  
+Allows a spatial trend in the mean/ Mean follows a trend across space or data
+\end{itemize}
+
+\end{column}
+
+\begin{column}{0.48\textwidth}
+
+\textbf{Other Extensions}
+
+\begin{itemize}
+\item Block Kriging
+\item Co-Kriging
+\item Indicator Kriging
+\item Bayesian Kriging
+\item Poisson Kriging
+\end{itemize}
+
+\end{column}
+
+\end{columns}
+
+\vspace{0.7cm}
+
+\centering
+\Large
+Our Focus: \textbf{Ordinary Kriging}
+
+## Advantages of Kriging
+
+\vspace{0.3cm}
+
+\begin{columns}[T]
+
+\begin{column}{0.48\textwidth}
+
+\textbf{Prediction Strength}
+
+\begin{itemize}
+\item Produces accurate estimates at unsampled locations
+\item Uses spatial correlation, not only distance
+\item Weights are chosen to minimize estimation variance
+\item Often outperforms simple inverse distance weighting
+\end{itemize}
+
+\end{column}
+
+\begin{column}{0.48\textwidth}
+
+\textbf{Built-in Uncertainty}
+
+\begin{itemize}
+\item Predicts a value \textit{and} prediction error
+\item Helps measure confidence in estimates
+\item Useful when making real decisions from data
+\item Identifies areas where more samples may be needed
+\end{itemize}
+
+\end{column}
+
+\end{columns}
+
+\vspace{0.45cm}
+
+\textbf{Flexible Across Fields}
+
+\begin{itemize}
+\item Environment, health, geology, engineering, sports analytics
+\end{itemize}
 
 ## Kriging - Overview
 
