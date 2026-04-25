@@ -517,6 +517,153 @@ For example one type of model is a spherical semivariogram. Here, the parameters
 \vspace{1em}
 Once a model has been fit, this function can be used to determine the values of $C(x_i, x_j)$ in the matrix $\begin{bmatrix} \mathbf{C} & \mathbf{1} \\ \mathbf{1}^T & 0 \end{bmatrix}$ and that of $C(x_0, x_i)$ in the vector $\begin{bmatrix} \mathbf{c}_0 \\ 0 \end{bmatrix}$.
 
+## Basic Example
+
+I have created a basic and small data set to demonstrate how to compute
+Kriging. The x and y variables represent testing locations within a lake, and
+the z variable is the concentration of algae at each testing location. The
+pred value is a coordinate without a testing area that we want to estimate
+algae concentration at.
+
+```{r algae, echo = TRUE}
+set.seed(1000)
+dat = data.frame(x = rnorm(6, mean=5, sd=3), y = rnorm(6, mean=5, sd=3),
+                     z = rnorm(6, mean=0.5, sd=0.3))
+pred = data.frame(x = 2, y = 3)
+```
+
+## Semivariance and Distance
+
+Here I calculate the distance between each unique set of points and the semivariance
+for each set of points.
+
+```{r dist_semivariance, echo = TRUE}
+semivariogram = data.frame(matrix(ncol = 2, nrow = 0))
+colnames(semivariogram) = c('Distance', 'Semivariance')
+for(i in 1:nrow(dat)){
+  for(j in 1:nrow(dat)){
+    if(j > i){
+      dist = sqrt((dat$x[i] - dat$x[j])^2 + (dat$y[i] - dat$y[j])^2)
+      semivariance = 0.5*((dat$z[i] - dat$z[j])^2)
+      semivariogram = rbind(semivariogram, data.frame("Distance" = dist, 
+                                                      "Semivariance" = semivariance))
+    }
+  }
+}
+```
+
+## Semivariogram Plot
+
+```{r semivariogram, echo = TRUE, fig.width=4, fig.height=2.33}
+library(ggplot2)
+ggplot(semivariogram, aes(x = Distance, y = Semivariance)) + geom_point() +
+  ggtitle("Semivariogram for the Lake Data")
+```
+
+## Semivariogram Model Selection
+
+There are a few different widely used semivariogram models. The most simple
+model is a linear model, and for this model there is no point in the graph
+where the semivariance flattens out and stops increasing, so the sill and 
+range must be arbitrarily selected. Another common model is the spherical
+model which appears as a quadratic function that flattens out where the
+semivariance begins to flatten out. The exponential model is similar to the
+spherical model but does not flatten out as completely.
+
+We determine the nugget, sill, and range for the model. There is no y-intercept
+in the semivariogram plot, so we can assume that the model intercepts the y-axis
+at the origin.
+
+```{r semivariance_parameters, echo = TRUE}
+nugget = 0
+partial_sill = max(semivariogram$Semivariance) - nugget
+range = semivariogram$Distance[10]
+```
+
+An exponential model can be used for the semivariogram of this data, and this
+will be applied to a distance matrix of the points.
+
+```{r exponential_model, echo = TRUE}
+dist_mat = as.matrix(dist(dat[, 1:2]))
+semivariogram2 = nugget + partial_sill*exp(-dist_mat/range)
+```
+
+## Set up Matrices and Vectors
+
+I also calculate the vector for the Euclidean distance between the points in the plane
+and the new testing coordinates.
+
+```{r pred_vec, echo = TRUE}
+dist_pred = sqrt((dat$x - pred$x)^2 + (dat$y - pred$y)^2)
+```
+
+I set up the matrices by adding a column and row of ones with a 0 in the bottom
+right spot in the matrix. This allows us to solve for the lambda and lagrange
+multiplier values.
+
+```{r matrices, echo = TRUE}
+semi_mat = matrix(1, 7, 7)
+semi_mat[1:6, 1:6] = semivariogram2
+semi_mat[7, 7] = 0
+```
+
+I calculate the semivariogram for the vector of the distances between the points
+and the new prediction coordinates.
+
+```{r pred_semivariance, echo = TRUE}
+semi_dist = nugget + partial_sill*exp(-dist_pred/range)
+dist_pred2 = c(semi_dist, 1)
+```
+
+## Solving for Weights
+
+We can solve for the weights and the lagrange multiplier, v, by taking
+the inverse of the matrix and multiplying it by the vector for the distances between
+the points and the new prediction coordinates.
+
+```{r weights, echo = TRUE}
+weights_v = solve(semi_mat) %*% dist_pred2
+```
+
+The weights are the first n values of the resulting vector, where n is the number
+of rows in the original data frame. The lagrange multiplier is the final value in
+the vector, and this is used to calculate the variance of the prediction.
+
+```{r weights_lagrange, echo = TRUE}
+weights = weights_v[1:6]
+lagrange = weights_v[7]
+```
+
+## Prediction
+
+The predicted value is the sum of each weight multiplied by the corresponding
+z value for the coordinates from the original data frame.
+
+```{r prediction, echo = TRUE}
+z_pred = sum(weights*dat$z)
+```
+
+The variance of the errors is the dot produce of the transpose of the weight 
+vector and the semivariogram vector of the distances between the original 
+points and the new coordinates plus the lagrange multiplier value.
+
+```{r variance_of_errors, echo = TRUE}
+variance = t(weights) %*% semi_dist + lagrange
+```
+
+## Plot of Prediction
+
+```{r combine_pred_and_dat, echo = FALSE}
+pred2 = c(2, 3, z_pred)
+dat2 = rbind(dat, pred2)
+```
+
+```{r prediction_plot, echo = TRUE, fig.width=4, fig.height=2.5}
+ggplot(dat2, aes(x = x, y = y, size = z)) + 
+  geom_point() + 
+  ggtitle("Locations sized by Algae Concentration")
+```
+
 ## Quakes - Introduction
 
 We are going to look at an example using the quakes dataset which is built into r. This dataset has 1000 observations of earthquake data around the Fiji area and includes things like the earthquakes location via latitude and longitude, the depth of the earthquake in km, the earthquakes magnitude, and how many seismic stations detected the earthquake. This example is going to look into what kind of insights and predictions can be made on the magnitude of earthquakes through the use of kriging.
