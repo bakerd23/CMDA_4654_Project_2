@@ -207,7 +207,136 @@ For example one type of model is a spherical semivariogram. Here, the parameters
 \vspace{1em}
 Once a model has been fit, this function can be used to determine the values of $C(x_i, x_j)$ in the matrix $\begin{bmatrix} \mathbf{C} & \mathbf{1} \\ \mathbf{1}^T & 0 \end{bmatrix}$ and that of $C(x_0, x_i)$ in the vector $\begin{bmatrix} \mathbf{c}_0 \\ 0 \end{bmatrix}$.
 
+## Quakes - Introduction
 
+We are going to look at an example using the quakes dataset which is built into r. This dataset has 1000 observations of earthquake data around the Fiji area and includes things like the earthquakes location via latitude and longitude, the depth of the earthquake in km, the earthquakes magnitude, and how many seismic stations detected the earthquake. This example is going to look into what kind of insights and predictions can be made on the magnitude of earthquakes through the use of kriging.
+
+$~$
+
+```{r, echo=TRUE}
+library(sf)
+library(gstat)
+library(mapview)
+library(stars)
+
+data(quakes)
+
+# Convert data into a spatial object
+quakes_sf <- st_as_sf(quakes, coords = c("long", "lat"), crs = 4326) %>%
+  st_transform(32760)
+```
+```{r, echo=TRUE, eval=FALSE}
+
+# Plot on map
+mapview(quakes_sf, 
+        zcol = "mag",
+        map.types = "CartoDB.Voyager", 
+        legend = TRUE)
+```
+
+## Quakes - Plotted data
+
+\includegraphics[width=\linewidth]{"C:/Users/sbroc/OneDrive/Desktop/CMDA 4654/Projects/Project 2/Pictures/plotted data.png"}
+
+## Quakes - Variogram
+
+The Variogram is one of the most important and insightful parts of kriging. The variogram is first estimated from the data, and then we choose a theoretical model to be fitted to it. There is no "best" method when it comes to choosing a model, but the variogram helps guide you to choosing the best fit for your data. Choosing the best possible model that accurately represents the spatial structure of your data is very important, as it directly impacts the quality of your predictions.
+
+$~$
+
+```{r, echo=TRUE, eval=FALSE}
+# Variogram
+v <- variogram(mag ~ 1, quakes_sf)
+# Selected Model
+v_fit <- fit.variogram(v, vgm(psill = 0.2, model = "Sph", range = 150000, nugget = 0.05))
+# Plotting
+v_df <- as.data.frame(v)
+v_line <- variogramLine(v_fit, maxdist = max(v_df$dist))
+v_line_df <- as.data.frame(v_line)
+
+ggplot() +
+  geom_point(data = v_df, aes(x = dist, y = gamma)) +
+  geom_line(data = v_line_df, aes(x = dist, y = gamma)) +
+  labs(
+    title = "Variogram with Fitted Model",
+    x = "Distance",
+    y = "Semivariance"
+  ) +
+  theme_minimal()
+```
+
+## Quakes - Variogram
+```{r, fig.width=5.5, fig.height=3, warning=FALSE, results='hide'}
+# Variogram
+v <- variogram(mag ~ 1, quakes_sf)
+# Model
+v_fit <- fit.variogram(v, vgm(psill = 0.2, model = "Sph", range = 150000, nugget = 0.05))
+v_df <- as.data.frame(v)
+# Plotting
+v_line <- variogramLine(v_fit, maxdist = max(v_df$dist))
+v_line_df <- as.data.frame(v_line)
+
+ggplot() +
+  geom_point(data = v_df, aes(x = dist, y = gamma)) +
+  geom_line(data = v_line_df, aes(x = dist, y = gamma)) +
+  labs(
+    title = "Variogram with Fitted Model",
+    x = "Distance",
+    y = "Semivariance"
+  ) +
+  theme_minimal()
+```
+
+## Quakes - Kriging
+
+Now that we have our model, we need some new points that we want to predict the magnitude for using kriging. To do this, we are going to create a grid of points and project it onto the Fiji area. This will allow us to use the points we have data for to make predictions on every point in the grid to see what their potential magnitude could look like. 
+
+Putting all this together, we can use the krige function from the gstat library to make predictions on the grid we just made and plot it onto a map.
+
+$~$
+
+```{r, echo=TRUE}
+# create predictions grid in the Fiji area
+pred_grid <- st_bbox(c(xmin = 163, ymin = -30, xmax = 185, ymax = -8), crs = 4326)
+quakes_grid <- st_as_stars(pred_grid, dx = 0.5, dy = 0.5) %>%
+  st_as_sf() %>%
+  st_transform(32760)
+```
+```{r, echo=TRUE, eval=FALSE}
+
+# Kriging
+quakes_kriged <- krige(mag ~ 1, quakes_sf, quakes_grid, model = v_fit)
+quakes_kriged_map <- st_transform(quakes_kriged, 4326)
+quakes_fin <- st_shift_longitude(quakes_kriged_map)
+names(quakes_fin)[3] <- "pred mag"
+
+# Plot on map
+mapview(quakes_kriged, 
+        zcol = "pred mag")
+```
+
+## Quakes - Predictions
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.795\linewidth]{C:/Users/sbroc/OneDrive/Desktop/CMDA 4654/Projects/Project 2/Pictures/mag prediction grid.png}
+\end{figure}
+
+## Quakes - Limitations and Conclusion
+
+**Limitations**
+
+\begin{itemize}
+  \item -Large areas with few data points tend to get pulled towards the global mean
+  \item -Extreme values have been "weakened" and pulled closer to the global mean
+  \item -Earthquakes have high variability when it comes to their magnitude
+\end{itemize}
+
+$~$
+
+**Conclusion**
+
+Our results give a decent idea of the general magnitude of earthquakes in areas we have data points for, but isn't great for predicting the exact magnitude due to over smoothing and it also struggles with predicting the magnitude in areas that lack data points. This example shows the importance of selecting your prediction area with intention. Kriging prefers smaller and more tight data, so trying make predictions over a large area is going to result in over smoothing. This could be improved by taking a smaller grid in a specific area of interest or by making the grid a more unique shape that follows the shape of the data.
 
 
 ```{r load-nba-data, cache=TRUE, include=FALSE}
