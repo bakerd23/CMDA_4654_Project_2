@@ -236,7 +236,7 @@ mapview(quakes_sf,
 
 ## Quakes - Plotted data
 
-\includegraphics[width=\linewidth]{"C:/Users/sbroc/OneDrive/Desktop/CMDA 4654/Projects/Project 2/Pictures/plotted data.png"}
+\includegraphics[width=\linewidth]{"plotted data.png"}
 
 ## Quakes - Variogram
 
@@ -319,7 +319,7 @@ mapview(quakes_kriged,
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.795\linewidth]{C:/Users/sbroc/OneDrive/Desktop/CMDA 4654/Projects/Project 2/Pictures/mag prediction grid.png}
+\includegraphics[width=0.795\linewidth]{"mag prediction grid.png"}
 \end{figure}
 
 ## Quakes - Limitations and Conclusion
