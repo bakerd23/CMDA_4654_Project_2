@@ -547,9 +547,11 @@ algae concentration at.\
 ```{r algae, echo = TRUE}
 set.seed(1010)
 # generating data at "known" locations
-dat = data.frame(x = rnorm(6, mean=5, sd=3), 
-                 y = rnorm(6, mean=5, sd=3),
-                 z = rnorm(6, mean=0.5, sd=0.15))
+dat <- data.frame(x = rnorm(6, mean=5, sd=3), 
+                 y = rnorm(6, mean=5, sd=3))
+# making there be a relationship between location and concentration
+z <- (dat$x + dat$y)/(max(dat$x) + max(dat$y))
+dat <- cbind(dat, z)
 
 # location of prediction
 pred = data.frame(x = 5, y = 3)
@@ -561,7 +563,7 @@ pred = data.frame(x = 5, y = 3)
 ```{r algae_plot, echo=TRUE, out.width="60%"}
 ggplot(data = dat, aes(x=x, y=y, size=z)) + geom_point() + labs(size = "Concentration", title = "Data Field") +
   theme_bw() + annotate("point", x=5, y=3, color = "orange", size=3, shape = 17) +
-  annotate("text", x = 5, y = 2.5, label = "Pred", color = "orange") + theme(text = element_text(size=22))
+  annotate("text", x = 5, y = 2.3, label = "Pred", color = "orange") + theme(text = element_text(size=22))
 
 ```
 
@@ -677,34 +679,38 @@ weights = weights_v[1:6]
 lagrange = weights_v[7]
 ```
 
-## Prediction
+## Prediction and Error
 
 The predicted value is the sum of each weight multiplied by the corresponding
 z value for the coordinates from the original data frame.
 
 ```{r prediction, echo = TRUE}
-z_pred = sum(weights*dat$z)
+z_pred <- sum(weights*dat$z); z_pred
 ```
 
-The variance of the errors is the dot product of the transpose of the weight 
-vector and the semivariogram vector of the distances between the original 
-points and the new coordinates plus the lagrange multiplier value.
+The absolute error can be found by computing the "actual" concentration value from the formula we used to compute the data field as if the location was a part of the original dataset
+```{r, echo=T}
+z_true <- (pred$x + pred$y)/(max(dat$x) + max(dat$y)); z_true
+abs_err <- (z_pred - z_true)*(z_pred - z_true); abs_err
+```
+
+The variance of the errors was previously given as $\sigma^2_e = C(0) + \sum_{i=1}^n \lambda_i C(x_0, x_i) + \Lambda$ and can be compute as follows. 
 
 ```{r variance_of_errors, echo = TRUE}
-variance = t(weights) %*% semi_dist + lagrange
+variance <- t(weights) %*% semi_dist + lagrange; variance[1]
 ```
 
 ## Plot of Prediction
 
 ```{r combine_pred_and_dat, echo = FALSE}
-pred2 = c(2, 3, z_pred)
+pred2 = c(5, 3, z_pred)
 dat2 = rbind(dat, pred2)
 ```
 
-```{r prediction_plot, echo = TRUE, fig.width=4, fig.height=2.5}
+```{r prediction_plot, echo = TRUE, out.width="60%"}
 ggplot(dat2, aes(x = x, y = y, size = z)) + 
-  geom_point() + 
-  ggtitle("Locations sized by Algae Concentration")
+  geom_point() + ggtitle("Locations sized by Algae Concentration") + theme_bw() +
+  theme(text = element_text(size = 22)) + annotate("text", x = 5, y = 2.3, label = "Pred", color = "orange")
 ```
 
 ## Quakes - Introduction
