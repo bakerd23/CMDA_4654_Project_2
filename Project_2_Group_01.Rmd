@@ -535,7 +535,7 @@ Once a model has been fit, this function can be used to determine the values of 
 
 ## Basic Example
 
-We generate a small data set to demonstrate how to compute the Kriging weights to predict data at a new location. \
+We generate a small data set to demonstrate how to compute the Kriging weights to predict data at a new location. A CSV for the generated dataset can be found \href{https://drive.google.com/file/d/1qYDI3U1toa1TEreFN5rNboHFHsfFmMFk/view?usp=drive_link}{here}. \
 \vspace{1em}
 The $x$ and $y$ variables represent testing locations within a lake, and
 the $z$ variable is the concentration of algae at each testing location. \
