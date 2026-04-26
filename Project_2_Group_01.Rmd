@@ -1,5 +1,5 @@
 ---
-title: "Kriging in Sports"
+title: "Kriging"
 subtitle: "CMDA 4654 Project 2 - Group 1"
 author: "Baker Dean, Toshaani Dewan, Nick Fitti, Nico Ottobre, Margaret Smith"
 date: "April 2026"
@@ -380,6 +380,8 @@ Our Focus: \textbf{Ordinary Kriging}
 \item Environment, health, geology, engineering, sports analytics
 \end{itemize}
 
+<!---------------------------    SLIDE   ------------------------------------->
+
 ## Kriging - Overview
 
 \begin{columns}
@@ -407,9 +409,7 @@ Z^*(x_0) = \sum_{i=1}^n \lambda_i Z(x_i) = \mathbf{\lambda}^T \mathbf{z}
 \end{column}
 \end{columns}
 
-
-
-
+<!---------------------------    SLIDE   ------------------------------------->
 
 ## The Kriging Model
 
@@ -430,6 +430,9 @@ Z(x) = \mu + \epsilon(x)
 \end{align*}
 Additionally, we assume isotropy; any pair of locations that are the same distance from each other, regardless of direction, have the same spatial correlation.
 
+
+<!---------------------------    SLIDE   ------------------------------------->
+
 ## Solving for the Kriging Weights
 
 To solve for the weights, $\lambda_i$ in
@@ -443,6 +446,8 @@ and we are able to express the minimization problem as,
 $$\text{min} \ \sigma^2_e = \text{min }E \big[ (Z(x) - Z^*(x))^2 \big]$$
 
 To solve this constrained optimization problem, the method of Lagrange multiplier is used.
+
+<!---------------------------    SLIDE   ------------------------------------->
 
 ## Solving for the Kriging Weights (cont'd)
 
@@ -474,7 +479,7 @@ C(x_n, x_1) & C(x_n, x_2) & C(x_n, x_3)  & \cdots & C(x_n, x_n) & 1 \\
  \end{bmatrix} \hspace{1em}
 \end{align*}
 
-
+<!---------------------------    SLIDE   ------------------------------------->
 
 ## Solving for the Kriging Weights (cont'd)
 
@@ -492,6 +497,8 @@ After solving for the kriging weights, we can find the error variance of our est
 \sigma^2_e = C(0) + \sum_{i=1}^n \lambda_i C(x_0, x_i) + \Lambda
 \end{align*}
 
+<!---------------------------    SLIDE   ------------------------------------->
+
 ## Variogram Model
 
 We previously assumed that the spatial covariance can be modeled with a variogram function $2\gamma(\mathbf{h})$, or equivalently a semivariogram function $\gamma(\mathbf{h})$. (Though in spatial statistics these two terms are sometimes used interchangeably.)  \
@@ -506,8 +513,10 @@ where $\left| N_{ \mathbf{h}}\right|$ is the number of unique pairs in the set d
 N_{ \mathbf{h}} := \left\{ (x_i, x_j) : | x_i - x_j| = h \right\} \text{ for } i, j = 1, \dots, n
 \end{align*}
 
-That is, we obtain $k$ discrete set of points with distances $h$ and corresponding average of variances $2\widehat{\gamma}(\mathbf{h})$.
+That is, we obtain $k$ discrete set of points with distances $h$ and corresponding average of variances $2\widehat{\gamma}(\mathbf{h})$. \
+Note: This can also be framed with $\gamma(\mathbf{h})$ denoting the semivariance occuring at distance $\mathbf{h}$.
 
+<!---------------------------    SLIDE   ------------------------------------->
 
 ## Variogram Model (cont'd)
 
@@ -521,33 +530,60 @@ For example one type of model is a spherical semivariogram. Here, the parameters
 \vspace{1em}
 Once a model has been fit, this function can be used to determine the values of $C(x_i, x_j)$ in the matrix $\begin{bmatrix} \mathbf{C} & \mathbf{1} \\ \mathbf{1}^T & 0 \end{bmatrix}$ and that of $C(x_0, x_i)$ in the vector $\begin{bmatrix} \mathbf{c}_0 \\ 0 \end{bmatrix}$.
 
+<!---------------------------    SLIDE   ------------------------------------->
+
+
 ## Basic Example
 
-I have created a basic and small data set to demonstrate how to compute
-Kriging. The x and y variables represent testing locations within a lake, and
-the z variable is the concentration of algae at each testing location. The
-pred value is a coordinate without a testing area that we want to estimate
-algae concentration at.
+We generate a small data set to demonstrate how to compute the Kriging weights to predict data at a new location. \
+\vspace{1em}
+The $x$ and $y$ variables represent testing locations within a lake, and
+the $z$ variable is the concentration of algae at each testing location. \
+The `pred` value is a coordinate without a testing area that we want to estimate
+algae concentration at.\
+
+\vspace{1.5em}
 
 ```{r algae, echo = TRUE}
-set.seed(1000)
-dat = data.frame(x = rnorm(6, mean=5, sd=3), y = rnorm(6, mean=5, sd=3),
-                     z = rnorm(6, mean=0.5, sd=0.3))
-pred = data.frame(x = 2, y = 3)
+set.seed(1010)
+# generating data at "known" locations
+dat = data.frame(x = rnorm(6, mean=5, sd=3), 
+                 y = rnorm(6, mean=5, sd=3),
+                 z = rnorm(6, mean=0.5, sd=0.15))
+
+# location of prediction
+pred = data.frame(x = 5, y = 3)
 ```
+
+<!---------------------------    SLIDE   ------------------------------------->
+
+## Plotting the data field
+```{r algae_plot, echo=TRUE, out.width="60%"}
+ggplot(data = dat, aes(x=x, y=y, size=z)) + geom_point() + labs(size = "Concentration", title = "Data Field") +
+  theme_bw() + annotate("point", x=5, y=3, color = "orange", size=3, shape = 17) +
+  annotate("text", x = 5, y = 2.5, label = "Pred", color = "orange") + theme(text = element_text(size=22))
+
+```
+
+
+<!---------------------------    SLIDE   ------------------------------------->
 
 ## Semivariance and Distance
 
-Here I calculate the distance between each unique set of points and the semivariance
+Here, we calculate the distance between each unique set of points and the semivariance
 for each set of points.
 
 ```{r dist_semivariance, echo = TRUE}
+# initializing df for semivariogram
 semivariogram = data.frame(matrix(ncol = 2, nrow = 0))
 colnames(semivariogram) = c('Distance', 'Semivariance')
+# iterating over each location
 for(i in 1:nrow(dat)){
+  # at each location, we calculate the distance to all other points and corresponding
+  # semivariance
   for(j in 1:nrow(dat)){
     if(j > i){
-      dist = sqrt((dat$x[i] - dat$x[j])^2 + (dat$y[i] - dat$y[j])^2)
+      dist = sqrt((dat$x[i] - dat$x[j])^2 + (dat$y[i] - dat$y[j])^2) # using L2 distance
       semivariance = 0.5*((dat$z[i] - dat$z[j])^2)
       semivariogram = rbind(semivariogram, data.frame("Distance" = dist, 
                                                       "Semivariance" = semivariance))
@@ -556,12 +592,13 @@ for(i in 1:nrow(dat)){
 }
 ```
 
+<!---------------------------    SLIDE   ------------------------------------->
+
 ## Semivariogram Plot
 
-```{r semivariogram, echo = TRUE, fig.width=4, fig.height=2.33}
-library(ggplot2)
+```{r semivariogram, echo = TRUE, out.width="60%"}
 ggplot(semivariogram, aes(x = Distance, y = Semivariance)) + geom_point() +
-  ggtitle("Semivariogram for the Lake Data")
+  ggtitle("Semivariogram for the Lake Data") + theme(text = element_text(size = 22))
 ```
 
 ## Semivariogram Model Selection
@@ -591,6 +628,8 @@ will be applied to a distance matrix of the points.
 dist_mat = as.matrix(dist(dat[, 1:2]))
 semivariogram2 = nugget + partial_sill*exp(-dist_mat/range)
 ```
+
+<!---------------------------    SLIDE   ------------------------------------->
 
 ## Set up Matrices and Vectors
 
@@ -647,7 +686,7 @@ z value for the coordinates from the original data frame.
 z_pred = sum(weights*dat$z)
 ```
 
-The variance of the errors is the dot produce of the transpose of the weight 
+The variance of the errors is the dot product of the transpose of the weight 
 vector and the semivariogram vector of the distances between the original 
 points and the new coordinates plus the lagrange multiplier value.
 
