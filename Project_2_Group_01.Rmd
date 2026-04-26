@@ -105,6 +105,51 @@ Farther Away $\Rightarrow$ Less Similar
 \normalsize
 \textbf{This motivates interpolation methods such as Kriging.}
 
+## Motivation for Kriging
+
+\vspace{0.2cm}
+
+\textbf{Why was Kriging developed?}
+
+\begin{itemize}
+\item Developed in the 1950s by South African mining engineer Danie Krige
+\item Created to estimate gold grades from limited borehole samples/estimate ore concentrations in unsampled regions
+\item Later formalized mathematically by Georges Matheron
+\item Designed to improve prediction accuracy over simpler methods
+\end{itemize}
+
+\vspace{0.35cm}
+
+\begin{columns}[T]
+
+\begin{column}{0.48\textwidth}
+
+\textbf{Why do we need it?}
+
+\begin{itemize}
+\item Real-world data is often sparse, time-consuming or expensive to collect
+\item Measuring every location is impractical
+\item Need reliable estimates between sampled points
+\item Need uncertainty measures for decision-making
+\end{itemize}
+
+\end{column}
+
+\begin{column}{0.48\textwidth}
+
+\textbf{What is the goal?}
+
+\begin{itemize}
+\item Predict unknown values using nearby observations
+\item Use spatial autocorrelation efficiently
+\item Reduce bias in predictions
+\item Minimize prediction error variance
+\end{itemize}
+
+\end{column}
+
+\end{columns}
+
 
 ## What is Kriging?
 
@@ -156,51 +201,6 @@ Z^*(x_0)=\sum_{i=1}^{n}\lambda_i Z(x_i)
 \Large
 Near $\Rightarrow$ More Influence \\[0.35cm]
 Far $\Rightarrow$ Less Influence
-
-\end{column}
-
-\end{columns}
-
-## Motivation for Kriging
-
-\vspace{0.2cm}
-
-\textbf{Why was Kriging developed?}
-
-\begin{itemize}
-\item Developed in the 1950s by South African mining engineer Danie Krige
-\item Created to estimate gold grades from limited borehole samples/estimate ore concentrations in unsampled regions
-\item Later formalized mathematically by Georges Matheron
-\item Designed to improve prediction accuracy over simpler methods
-\end{itemize}
-
-\vspace{0.35cm}
-
-\begin{columns}[T]
-
-\begin{column}{0.48\textwidth}
-
-\textbf{Why do we need it?}
-
-\begin{itemize}
-\item Real-world data is often sparse, time-consuming or expensive to collect
-\item Measuring every location is impractical
-\item Need reliable estimates between sampled points
-\item Need uncertainty measures for decision-making
-\end{itemize}
-
-\end{column}
-
-\begin{column}{0.48\textwidth}
-
-\textbf{What is the goal?}
-
-\begin{itemize}
-\item Predict unknown values using nearby observations
-\item Use spatial autocorrelation efficiently
-\item Reduce bias in predictions
-\item Minimize prediction error variance
-\end{itemize}
 
 \end{column}
 
@@ -422,7 +422,7 @@ $\epsilon(x)$ is assumed to have a zero mean and a corresponding variogram model
 Note: This assumes that the variation in the data is a function of the distance between points.
 \vspace{1em}
 
-There are a handful of different types of Kriging but we will be focusing on *Ordinary Kriging*. \
+As previously mentioned, we will be focusing on *Ordinary Kriging*. \
 \vspace{1.5em}
 Ordinary Kriging assumes an unknown stationary mean. That is, the mean of the response variable is independent of location. This simplifies the above model to:
 \begin{align*}
@@ -437,7 +437,7 @@ Additionally, we assume isotropy; any pair of locations that are the same distan
 
 To solve for the weights, $\lambda_i$ in
 $$Z^*(x_0) = \sum_{i=1}^n \lambda_i Z(x_i),$$
-To estimate the weights $lambda_i$ is equivalent to finding the $lambda_i$ that minimizes the error variance  
+To estimate the weights $\lambda_i$ is equivalent to finding the $\lambda_i$ that minimizes the error variance  
 $$\text{min} \ \sigma^2_e = \text{min }\text{Var}\left[ Z(x) - Z^*(x) \right]$$
 such that the estimator is unbiased, i.e. $\text{E}\big[Z(x) - Z^*(x)\big] = 0$. (This is satisfied by assuming a stationary mean.) \
 So, the weights are constrained to satisfy
@@ -497,6 +497,8 @@ After solving for the kriging weights, we can find the error variance of our est
 \sigma^2_e = C(0) + \sum_{i=1}^n \lambda_i C(x_0, x_i) + \Lambda
 \end{align*}
 
+Last, due to construction, these weights will result in $Z^*(x_0)$ be a best least unbiased estimator. 
+
 <!---------------------------    SLIDE   ------------------------------------->
 
 ## Variogram Model
@@ -514,7 +516,7 @@ N_{ \mathbf{h}} := \left\{ (x_i, x_j) : | x_i - x_j| = h \right\} \text{ for } i
 \end{align*}
 
 That is, we obtain $k$ discrete set of points with distances $h$ and corresponding average of variances $2\widehat{\gamma}(\mathbf{h})$. \
-Note: This can also be framed with $\gamma(\mathbf{h})$ denoting the semivariance occuring at distance $\mathbf{h}$.
+Note: This can also be framed with $\gamma(\mathbf{h})$ denoting the semivariance occurring at distance $\mathbf{h}$.
 
 <!---------------------------    SLIDE   ------------------------------------->
 
@@ -524,14 +526,27 @@ Last, a variogram model is fit to the sample variogram. The optimal variogram wi
 \begin{align*}
 \sum_{i=1}^k \big( 2 \widehat{\gamma}(\mathbf{h}) - 2 \gamma(\mathbf{h}, \alpha )\big)^2
 \end{align*}
-Where $\alpha$ is used to denote parameters of the variogram model. \
-\vspace{1.5em}
-For example one type of model is a spherical semivariogram. Here, the parameters are the "nugget", "partial sill" and "range" in geospatial statistic terms. Equivalently, these dictate the y-intercept, the difference in the maximum covariance and the y-intercept and the distance between the origin and where the maximum covariance is reached. \
+\begin{columns}
+\begin{column}{0.55\textwidth}
+Where $\alpha$ is used to denote parameters of the variogram model. \\
+Frequently, these parameters are the "nugget", "partial sill" and "range" in geospatial statistic terms. Equivalently, these dictate the y-intercept, the difference in the maximum covariance and the y-intercept and the distance between the origin and where the maximum covariance is reached. \\
+{\small Image found \cite{arc_gis}}
+\end{column}
+\begin{column}{0.45\textwidth}
+\includegraphics[width=\linewidth]{"semi_var_better.png"}
+\end{column}
+\end{columns}
+
+
+
+<!---------------------------    SLIDE   ------------------------------------->
+
+## Variogram Conclusion
+
 \vspace{1em}
 Once a model has been fit, this function can be used to determine the values of $C(x_i, x_j)$ in the matrix $\begin{bmatrix} \mathbf{C} & \mathbf{1} \\ \mathbf{1}^T & 0 \end{bmatrix}$ and that of $C(x_0, x_i)$ in the vector $\begin{bmatrix} \mathbf{c}_0 \\ 0 \end{bmatrix}$.
 
 <!---------------------------    SLIDE   ------------------------------------->
-
 
 ## Basic Example
 
@@ -691,7 +706,7 @@ z_pred <- sum(weights*dat$z); z_pred
 The absolute error can be found by computing the "actual" concentration value from the formula we used to compute the data field as if the location was a part of the original dataset
 ```{r, echo=T}
 z_true <- (pred$x + pred$y)/(max(dat$x) + max(dat$y)); z_true
-abs_err <- (z_pred - z_true)*(z_pred - z_true); abs_err
+abs_err <- (z_pred - z_true); abs_err
 ```
 
 The variance of the errors was previously given as $\sigma^2_e = C(0) + \sum_{i=1}^n \lambda_i C(x_0, x_i) + \Lambda$ and can be compute as follows. 
@@ -715,7 +730,7 @@ ggplot(dat2, aes(x = x, y = y, size = z)) +
 
 ## Quakes - Introduction
 
-We are going to look at an example using the quakes dataset which is built into r. This dataset has 1000 observations of earthquake data around the Fiji area and includes things like the earthquakes location via latitude and longitude, the depth of the earthquake in km, the earthquakes magnitude, and how many seismic stations detected the earthquake. This example is going to look into what kind of insights and predictions can be made on the magnitude of earthquakes through the use of kriging. A CSV for the quakes dataset can be found \href{https://drive.google.com/file/d/1kbtekpLZqff0aodyZYTPq65BoePwRHyn/view?usp=sharing}{here}.
+We are going to look at an example using the quakes dataset which is built into R. This dataset has 1000 observations of earthquake data around the Fiji area and includes things like the earthquakes location via latitude and longitude, the depth of the earthquake in km, the earthquakes magnitude, and how many seismic stations detected the earthquake. This example is going to look into what kind of insights and predictions can be made on the magnitude of earthquakes through the use of kriging. A CSV for the quakes dataset can be found \href{https://drive.google.com/file/d/1kbtekpLZqff0aodyZYTPq65BoePwRHyn/view?usp=sharing}{here}.
 
 $~$
 
