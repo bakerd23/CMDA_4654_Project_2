@@ -1097,6 +1097,40 @@ Since the shot map is made up of x and y data, it can be treated similarly to a 
 
 Combining those two areas will mean that Kriging can make a points per shot estimation from every location on the floor which can then be used to check if teams are running their offenses to peak efficiency.
 
+## Kriging Execution
+
+There will be three applications of Kriging used in this investigation but they will all generally follow the same flow. This code performs an example for attempt frequency:
+\begin{itemize}
+\item Make a grid of bins across the court containing true shot data
+\end{itemize}
+```{r, echo=TRUE, eval=FALSE}
+pred_grid <- make_pred_grid()
+bins <- make_bins(team)
+attempt_bins <- bins %>% select(x_bin, y_bin, attempts) %>% as.data.frame()
+```
+\begin{itemize}
+\item Run the `autoKrige` function on the bins
+\end{itemize}
+```{r, echo=TRUE, eval=FALSE}
+krig_attempts <- autoKrige(attempts ~ 1, input_data = attempt_bins, new_data = pred_grid)
+```
+\begin{itemize}
+\item Plot the output onto a prediction grid
+\end{itemize}
+```{r, echo=TRUE, eval=FALSE}
+ggplot(krig_attempts_df, aes(x = x, y = y, fill = attempts_pred)) +
+    geom_raster(interpolate = TRUE) +
+    draw_court() +
+    scale_fill_viridis_c() +
+    coord_fixed(xlim = c(0, 35), ylim = c(-25, 25)) +
+    labs(title = paste(team, "- Shot Attempts"),
+         x = "Distance from Basket (ft)",
+         y = "Court Width (ft)",
+         fill = "Attempts") +
+    theme_minimal(base_size = 7) +
+    theme(panel.grid = element_blank(), plot.margin = margin(t = 2, r = 0, b = 0, l = -3))
+```
+
 ## Attempt Frequency Kriging
 
 A typical picture of attempt frequency for a basketball team would consist of colored boxes or hexes that represent volume from each area of the court, but a custom Kriging can smooth this out into a continuous map using two foot by two foot bins.
