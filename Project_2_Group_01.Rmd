@@ -10,7 +10,10 @@ output:
     fonttheme: professionalfonts
     highlight: kate
     theme: Rochester
+    citation_package: biblatex
 urlcolor: blue
+bibliography: reference.bib
+biblatexoptions: [backend=biber]
 header-includes:
 - \definecolor{VTmaroon}{HTML}{861F41}
 - \usecolortheme[named=VTmaroon]{structure}
@@ -35,6 +38,7 @@ header-includes:
 - \usepackage{bm}
 - \usepackage{enumitem}
 - \usepackage{underscore}
+- \usepackage{biblatex}
 - \setlist[itemize]{label=\textbullet}
 ---
 ```{r setup, include=FALSE}
@@ -1394,7 +1398,7 @@ plot_fg_pct_player("Stephen Curry")
 
 \begin{columns}
 \begin{column}{0.5\textwidth}
-
+\nocite{*}
 A plot of the residuals from the predictions against the distance from the basket of the shots gives some insights about how Kriging outputs tend to work - the model underpredicted the almost outlier-like high percentages on dunks and layups near the basket, was most wild for the midrange where the data is far more sparse and inconsistent, and then was fairly tight and accurate for three point shots.
 
 This means that NBA teams could have the most confidence in conclusions related to threes but should perhaps be careful when making broad conclusions about midrange shots based on the Kriging technique.
@@ -1475,14 +1479,3 @@ bins %>%
 \end{column}
 \end{columns}
 
-## References
-
-\href{https://www.paulamoraga.com/book-spatial/kriging.html}{https://www.paulamoraga.com/book-spatial/kriging.html}
-
-\href{https://www.publichealth.columbia.edu/research/population-health-methods/kriging-interpolation}{https://www.publichealth.columbia.edu/research/population-health-methods/kriging-interpolation}
-
-\href{https://www.youtube.com/watch?v=dfSMGJFRL1U}{https://www.youtube.com/watch?v=dfSMGJFRL1U}
-
-\href{https://www.youtube.com/watch?v=ZRyiBKvqjJM}{https://www.youtube.com/watch?v=ZRyiBKvqjJM}
-
-\href{https://link.springer.com/article/10.1007/s00180-024-01564-4}{https://link.springer.com/article/10.1007/s00180-024-01564-4}
