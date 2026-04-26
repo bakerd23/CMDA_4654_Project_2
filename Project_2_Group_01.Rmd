@@ -715,7 +715,7 @@ ggplot(dat2, aes(x = x, y = y, size = z)) +
 
 ## Quakes - Introduction
 
-We are going to look at an example using the quakes dataset which is built into r. This dataset has 1000 observations of earthquake data around the Fiji area and includes things like the earthquakes location via latitude and longitude, the depth of the earthquake in km, the earthquakes magnitude, and how many seismic stations detected the earthquake. This example is going to look into what kind of insights and predictions can be made on the magnitude of earthquakes through the use of kriging.
+We are going to look at an example using the quakes dataset which is built into r. This dataset has 1000 observations of earthquake data around the Fiji area and includes things like the earthquakes location via latitude and longitude, the depth of the earthquake in km, the earthquakes magnitude, and how many seismic stations detected the earthquake. This example is going to look into what kind of insights and predictions can be made on the magnitude of earthquakes through the use of kriging. A CSV for the quakes dataset can be found \href{https://drive.google.com/file/d/1kbtekpLZqff0aodyZYTPq65BoePwRHyn/view?usp=sharing}{here}.
 
 $~$
 
