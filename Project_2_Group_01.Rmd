@@ -543,7 +543,16 @@ Frequently, these parameters are the "nugget", "partial sill" and "range" in geo
 
 ## Variogram Conclusion
 
-\vspace{1em}
+A frequently used model is the spherical semivariance defined by
+\begin{align*}
+\gamma(\mathbf{h}) = \begin{cases}  0 & \text{ if } h = 0 \\
+\text{nugget } + (\text{partial sill})\left(1 + \frac{3}{2} \left( \frac{h}{\text{range}}  \right) + \frac{1}{2} \left( \frac{h}{\text{range}} \right)^3\right) \hspace{1em} &\text{ if } 0 < h \le \text{range}  \\
+\text{nugget } + \text{ partial sill} &\text{ if } h > \text{range} 
+\end{cases}
+\end{align*}
+An example plot of the sample variogram points with a spherical variogram fit can look like
+\href{}
+
 Once a model has been fit, this function can be used to determine the values of $C(x_i, x_j)$ in the matrix $\begin{bmatrix} \mathbf{C} & \mathbf{1} \\ \mathbf{1}^T & 0 \end{bmatrix}$ and that of $C(x_0, x_i)$ in the vector $\begin{bmatrix} \mathbf{c}_0 \\ 0 \end{bmatrix}$.
 
 <!---------------------------    SLIDE   ------------------------------------->
