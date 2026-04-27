@@ -166,7 +166,7 @@ Farther Away $\Rightarrow$ Less Similar
 \item Provides prediction uncertainty
 \end{itemize}
 
-- An observation will be more similar to data that is "close" in space comparative to those "far" in space.
+- An observation will be more similar to data that is "close" in space compared to those "far" in space.
 \vspace{1.5em}
 
 "Closeness" will be determined by the spatial correlation between points in the given field of data.
@@ -327,7 +327,7 @@ Known constant mean
 Unknown but constant mean
 
 \item \textbf{Universal Kriging}  
-Allows a spatial trend in the mean/ Mean follows a trend across space or data
+Allows a spatial trend in the mean - Mean follows a trend across space or data
 \end{itemize}
 
 \end{column}
@@ -422,7 +422,7 @@ Additionally, we assume isotropy; any pair of locations that are the same distan
 
 ## Solving for the Kriging Weights
 
-To solve for the weights, $\lambda_i$ in
+To solve for the weights $\lambda_i$ in
 $$Z^*(x_0) = \sum_{i=1}^n \lambda_i Z(x_i),$$
 To estimate the weights $\lambda_i$ is equivalent to finding the $\lambda_i$ that minimizes the error variance  
 $$\text{min} \ \sigma^2_e = \text{min }\text{Var}\left[ Z(x) - Z^*(x) \right]$$
@@ -445,7 +445,7 @@ After some algebraic manipulation, we arrive at minimizing
 &C(0) - 2 \sum_{i=1}^n \lambda_i C(x_0, x_i) + \sum_{i=1}^n \sum_{j=1}^n \lambda_i \lambda_j C(x_i, x_j) -2 \Lambda \left( \sum_{i=1}^n \lambda_i - 1 \right)\\
 &= \mathbf{c_0} - 2 \mathbf{\lambda}^T \mathbf{c_{x_0}} + \mathbf{\lambda}^T \mathbf{C} \mathbf{\lambda} - 2 \Lambda \left( \mathbf{\lambda}^T \mathbf{1} - \mathbf{1} \right)
 \end{align*}
-by taking the partial derivatives with respect to the $\lambda_i$'s (or vector $\mathbf{\lambda}$) and then the lagrange multiplier $\Lambda$. \
+by taking the partial derivatives with respect to the $\lambda_i$'s (or vector $\mathbf{\lambda}$) and then the Lagrange multiplier $\Lambda$. \
 \vspace{0.5em}
 The solution results in solving the system
 \begin{align*}
@@ -481,10 +481,10 @@ Note: As $n$ becomes large, the dimensions of the matrix could cause it to becom
 \vspace{0.5em}
 After solving for the kriging weights, we can find the error variance of our estimate $Z^*(x_0)$ as
 \begin{align*}
-\sigma^2_e = C(0) + \sum_{i=1}^n \lambda_i C(x_0, x_i) + \Lambda
+\sigma^2_e = C(0) - \sum_{i=1}^n \lambda_i C(x_0, x_i) + \Lambda
 \end{align*}
 
-Last, due to construction, these weights will result in $Z^*(x_0)$ being a best least unbiased estimator (BLUE). 
+Last, due to construction, these weights will result in $Z^*(x_0)$ being a best linear unbiased estimator (BLUE). 
 
 <!---------------------------    SLIDE   ------------------------------------->
 
@@ -662,7 +662,7 @@ dist_pred = sqrt((dat$x - pred$x)^2 + (dat$y - pred$y)^2)
 ```
 
 Next, we set up the matrices by adding a column and row of ones with a 0 in the bottom
-right spot in the matrix. This allows us to solve for the $\lambda_i$ and lagrange
+right spot in the matrix. This allows us to solve for the $\lambda_i$ and Lagrange
 multiplier values.
 
 ```{r matrices, echo = TRUE}
@@ -681,7 +681,7 @@ dist_pred2 = c(semi_dist, 1)
 
 ## Solving for Weights
 
-We can solve for the weights and the lagrange multiplier, $\Lambda$, by taking
+We can solve for the weights and the Lagrange multiplier, $\Lambda$, by taking
 the inverse of the matrix and multiplying it by the vector for the distances between
 the points and the new prediction coordinates.
 
@@ -690,13 +690,13 @@ weights_v = solve(semi_mat) %*% dist_pred2
 ```
 
 The weights are the first $n$ values of the resulting vector, where $n$ is the number
-of rows in the original data frame. The lagrange multiplier is the final value in
+of rows in the original data frame. The Lagrange multiplier is the final value in
 the vector, and this is used to calculate the variance of the prediction.
 
-```{r weights_lagrange, echo = TRUE}
+```{r weights_Lagrange, echo = TRUE}
 # extracting the values to be used separately 
 weights = weights_v[1:6]
-lagrange = weights_v[7]
+Lagrange = weights_v[7]
 ```
 
 ## Prediction and Error
@@ -717,7 +717,7 @@ abs_err <- (z_pred - z_true); abs_err
 The variance of the errors was previously given as $\sigma^2_e = C(0) + \sum_{i=1}^n \lambda_i C(x_0, x_i) + \Lambda$ and can be compute as follows.  ($C(0)$ is the nugget, which is zero in this example.)
 
 ```{r variance_of_errors, echo = TRUE}
-variance <- t(weights) %*% semi_dist + lagrange; variance[1]
+variance <- t(weights) %*% semi_dist + Lagrange; variance[1]
 ```
 
 ## Plot of Prediction
@@ -735,7 +735,7 @@ ggplot(dat2, aes(x = x, y = y, size = z)) +
 
 ## Quakes - Introduction
 
-We are going to look at an example using the quakes dataset which is built into R. This dataset has 1000 observations of earthquake data around the Fiji area and includes things like the earthquakes location via latitude and longitude, the depth of the earthquake in km, the earthquakes magnitude, and how many seismic stations detected the earthquake. This example is going to look into what kind of insights and predictions can be made on the magnitude of earthquakes through the use of kriging. A CSV for the quakes dataset can be found \href{https://drive.google.com/file/d/1kbtekpLZqff0aodyZYTPq65BoePwRHyn/view?usp=sharing}{here}.
+We are going to look at an example using the quakes dataset which is built into R. This dataset has 1000 observations of earthquake data around the Fiji area and includes things like the earthquake's location via latitude and longitude, the depth of the earthquake in km, the earthquake's magnitude, and how many seismic stations detected the earthquake. This example is going to look into what kind of insights and predictions can be made on the magnitude of earthquakes through the use of kriging. A CSV for the quakes dataset can be found \href{https://drive.google.com/file/d/1kbtekpLZqff0aodyZYTPq65BoePwRHyn/view?usp=sharing}{here}.
 
 $~$
 
@@ -862,7 +862,7 @@ $~$
 
 **Conclusion**
 
-Our results give a decent idea of the general magnitude of earthquakes in areas we have data points for, but isn't great for predicting the exact magnitude and it also struggles with predicting the magnitude in areas that lack data points. This highlights the idea that kriging is suited more towards interpolation rather than extrapolation. Kriging prefers smaller and more tight data, so trying make predictions over a large area is going to result in over smoothing. This could be improved in this example by taking a smaller grid in a specific area of interest or by making the grid a more unique shape that follows the shape of the data rather than trying to get estimates for areas where we have no data points.
+Our results give a decent idea of the general magnitude of earthquakes in areas we have data points for, but is not great for predicting the exact magnitude and it also struggles with predicting the magnitude in areas that lack data points. This highlights the idea that kriging is suited more towards interpolation rather than extrapolation. Kriging prefers smaller and more tight data, so trying to make predictions over a large area is going to result in over smoothing. This could be improved in this example by taking a smaller grid in a specific area of interest or by making the grid a more unique shape that follows the shape of the data rather than trying to get estimates for areas where we have no data points.
 
 
 ```{r load-nba-data, cache=TRUE, include=FALSE}
@@ -1018,7 +1018,7 @@ make_bins <- function(team, bin_size = 2, min_attempts = 10) {
 
 ## Data Introduction
 
-Points per shot is one of the biggest current topics of discussion in basketball analytics. It is calculated using two factors: a team or players chance of making a shot from a position on the floor and the point of value of a make from that position. Performing analysis on this topic requires gathering both of those values which can be done using the `hoopr` package.
+Points per shot is one of the biggest current topics of discussion in basketball analytics. It is calculated using two factors: a team or players chance of making a shot from a position on the floor and the point of value of a make from that position. Performing analysis on this topic requires gathering both of those values which can be done using the `hoopR` package.
 
 ```{r, echo=TRUE, eval=FALSE}
 library(hoopR)
@@ -1300,7 +1300,7 @@ plot_pps(det_fg$data, "Detroit Pistons")
 
 So the question becomes "How do these smooth maps help NBA teams improve their offenses?"
 
-One of the main advantages that these plots provide is the way they make it much easier to full picture of slots across the floor. As a comparison, here would be a more standard look at a teams percentages and shot volumes from Synergy Sports. 
+One of the main advantages that these plots provide is they make it much easier to get the full picture of shots across the floor. As a comparison, here would be a more standard look at a teams percentages and shot volumes from Synergy Sports. 
 
 \begin{columns}
 \begin{column}{0.5\textwidth}
@@ -1554,7 +1554,7 @@ bins %>%
   # Calculate the residual at each bin
   mutate(residual = fg_pct - fg_pred) %>%
   
-  # Plot the reisudals against shot distance
+  # Plot the residuals against shot distance
   ggplot(aes(x = dist_from_rim, y = residual, color = zone, size = attempts)) +
   geom_point(alpha = 0.75) +
   geom_hline(yintercept = 0, linetype = "dashed",
