@@ -2,7 +2,7 @@
 title: "Kriging"
 subtitle: "CMDA 4654 Project 2 - Group 1"
 author: "Baker Dean, Toshaani Dewan, Nick Fitti, Nico Ottobre, Margaret Smith"
-date: "April 2026"
+date: "April 26th, 2026"
 fontsize: 9pt
 classoption: "aspectratio=169"
 output: 
@@ -153,7 +153,9 @@ Farther Away $\Rightarrow$ Less Similar
 
 ## What is Kriging?
 
-\vspace{0.35cm}
+\begin{columns}
+
+\begin{column}{0.6\textwidth}
 
 \textbf{Definition}
 
@@ -164,47 +166,61 @@ Farther Away $\Rightarrow$ Less Similar
 \item Provides prediction uncertainty
 \end{itemize}
 
-\vspace{0.25cm}
+- An observation will be more similar to data that is "close" in space comparative to those "far" in space.
+\vspace{1.5em}
 
-\begin{columns}[T]
-
-\begin{column}{0.50\textwidth}
-
-\textbf{Estimator}
-
-\[
-Z^*(x_0)=\sum_{i=1}^{n}\lambda_i Z(x_i)
-\]
-
-\begin{itemize}
-\item $Z(x_i)$ = known observations
-\item $\lambda_i$ = optimal weights
-\item $Z^*(x_0)$ = predicted value
-\item $n$ = number of points used
-\end{itemize}
+"Closeness" will be determined by the spatial correlation between points in the given field of data.
 
 \end{column}
+\begin{column}{0.40\textwidth}
+\centering
+\underline{The "Data Field"}
+\includegraphics[width=\linewidth]{"dummy image - croped.png"}
+\end{column}
 
-\begin{column}{0.50\textwidth}
 
-\textbf{Core Idea}
 
+\end{columns}
+
+<!---------------------------    SLIDE   ------------------------------------->
+
+## Kriging - Overview
+\begin{columns}
+\begin{column}{0.6\textwidth}
+\textbf{Estimator:}
+\begin{align*}
+Z^*(x_0)=\sum_{i=1}^{n}\lambda_i Z(x_i) = \mathbf{\lambda}^T\mathbf{z}
+\end{align*}
+
+\begin{itemize}
+\item $Z(x_i)$ = known observation values at location $x_i$
+\item $\lambda_i$ = optimal weights
+\item $Z^*(x_0)$ = predicted value at new location $x_0$
+\item $n$ = number of locations where data is observed
+\end{itemize}
+
+\textbf{Core Idea:}
 \begin{itemize}
 \item Closer points receive more weight
 \item Farther points receive less weight
-\item Weights are chosen optimally to improve prediction accuracy
 \end{itemize}
 
-\vspace{0.40cm}
-
 \centering
-\Large
-Near $\Rightarrow$ More Influence \\[0.35cm]
+\large
+Near $\Rightarrow$ More Influence \\
 Far $\Rightarrow$ Less Influence
+\end{column}
+\begin{column}{0.40\textwidth}
 
+\includegraphics[width=\linewidth]{"dummy image - cmda4654 p2.png"}
 \end{column}
 
 \end{columns}
+
+
+<!---------------------------    SLIDE   ------------------------------------->
+
+
 
 ## Motivation for Kriging (cont.)
 
@@ -382,35 +398,6 @@ Our Focus: \textbf{Ordinary Kriging}
 
 <!---------------------------    SLIDE   ------------------------------------->
 
-## Kriging - Overview
-
-\begin{columns}
-\begin{column}{0.55\textwidth}
-
-\underline{Goal:} \\
-- To estimate data values $Z^*(x_0)$ at unknown locations based on the given data $Z(x_i)$, for $i = 1, \dots, n$, where $n$ is the number of locations where data is observed. \\
-- In mathematical terms,
-\begin{align*}
-Z^*(x_0) = \sum_{i=1}^n \lambda_i Z(x_i) = \mathbf{\lambda}^T \mathbf{z}
-\end{align*}
-\vspace{0.5em}
-
-\underline{Idea:} \\
-- An observation will be more similar to data that is "close" in space comparative to those "far" in space.
-\vspace{1.5em}
-
-"Closeness" will be determined by the spatial correlation between points in the given field of data.
-
-\end{column}
-\begin{column}{0.45\textwidth}
-
-\includegraphics[width=\linewidth]{"dummy image - cmda4654 p2.png"}
-
-\end{column}
-\end{columns}
-
-<!---------------------------    SLIDE   ------------------------------------->
-
 ## The Kriging Model
 
 \underline{Generic Model:}
@@ -497,7 +484,7 @@ After solving for the kriging weights, we can find the error variance of our est
 \sigma^2_e = C(0) + \sum_{i=1}^n \lambda_i C(x_0, x_i) + \Lambda
 \end{align*}
 
-Last, due to construction, these weights will result in $Z^*(x_0)$ be a best least unbiased estimator. 
+Last, due to construction, these weights will result in $Z^*(x_0)$ being a best least unbiased estimator (BLUE). 
 
 <!---------------------------    SLIDE   ------------------------------------->
 
@@ -550,10 +537,19 @@ A frequently used model is the spherical semivariance defined by
 \text{nugget } + \text{ partial sill} &\text{ if } h > \text{range} 
 \end{cases}
 \end{align*}
-An example plot of the sample variogram points with a spherical variogram fit can look like
-\href{}
+\begin{columns}
+\begin{column}{0.5\linewidth}
+An example plot of the sample variogram points with a spherical variogram fit can look like the graph on the right. \\
+\vspace{1em}
+Once a model has been fit, this function can be used to determine the values of $C(x_i, x_j)$ in the matrix $\begin{bmatrix} \mathbf{C} & \mathbf{1} \\ \mathbf{1}^T & 0 \end{bmatrix}$ and that of $C(x_0, x_i)$ in the vector $\begin{bmatrix} \mathbf{c}_0 \\ 0 \end{bmatrix}$ to solve for the weights.
+\end{column}
+\begin{column}{0.45\linewidth}
+\includegraphics[width=\linewidth]{"geokrigingvariogram12-2.png"}
+\small{From reference \cite{paul_book}}
+\end{column}
+\end{columns}
 
-Once a model has been fit, this function can be used to determine the values of $C(x_i, x_j)$ in the matrix $\begin{bmatrix} \mathbf{C} & \mathbf{1} \\ \mathbf{1}^T & 0 \end{bmatrix}$ and that of $C(x_0, x_i)$ in the vector $\begin{bmatrix} \mathbf{c}_0 \\ 0 \end{bmatrix}$.
+
 
 <!---------------------------    SLIDE   ------------------------------------->
 
@@ -624,7 +620,8 @@ for(i in 1:nrow(dat)){
 
 ```{r semivariogram, echo = TRUE, out.width="60%"}
 ggplot(semivariogram, aes(x = Distance, y = Semivariance)) + geom_point() +
-  ggtitle("Semivariogram for the Lake Data") + theme(text = element_text(size = 22))
+  ggtitle("Semivariogram for the Lake Data") + theme(text = element_text(size = 22)) +
+  theme_bw()
 ```
 
 ## Semivariogram Model Selection
@@ -632,10 +629,8 @@ ggplot(semivariogram, aes(x = Distance, y = Semivariance)) + geom_point() +
 There are a few different widely used semivariogram models. The most simple
 model is a linear model, and for this model there is no point in the graph
 where the semivariance flattens out and stops increasing, so the sill and 
-range must be arbitrarily selected. Another common model is the spherical
-model which appears as a quadratic function that flattens out where the
-semivariance begins to flatten out. The exponential model is similar to the
-spherical model but does not flatten out as completely.
+range must be arbitrarily selected. As previously mentioned, a spherical
+model appears as a quadratic function that flattens out as the distance increases. Here, we choose the exponential model. It is similar to the spherical model but does not flatten out as completely.
 
 We determine the nugget, sill, and range for the model. There is no y-intercept
 in the semivariogram plot, so we can assume that the model intercepts the y-axis
@@ -647,7 +642,7 @@ partial_sill = max(semivariogram$Semivariance) - nugget
 range = semivariogram$Distance[10]
 ```
 
-An exponential model can be used for the semivariogram of this data, and this
+Here, we fit an exponential model for the sample semivariogram of the data, and this
 will be applied to a distance matrix of the points.
 
 ```{r exponential_model, echo = TRUE}
@@ -659,15 +654,15 @@ semivariogram2 = nugget + partial_sill*exp(-dist_mat/range)
 
 ## Set up Matrices and Vectors
 
-I also calculate the vector for the Euclidean distance between the points in the plane
+We then calculate the vector for the Euclidean distance between the points in the plane
 and the new testing coordinates.
 
 ```{r pred_vec, echo = TRUE}
 dist_pred = sqrt((dat$x - pred$x)^2 + (dat$y - pred$y)^2)
 ```
 
-I set up the matrices by adding a column and row of ones with a 0 in the bottom
-right spot in the matrix. This allows us to solve for the lambda and lagrange
+Next, we set up the matrices by adding a column and row of ones with a 0 in the bottom
+right spot in the matrix. This allows us to solve for the $\lambda_i$ and lagrange
 multiplier values.
 
 ```{r matrices, echo = TRUE}
@@ -676,8 +671,8 @@ semi_mat[1:6, 1:6] = semivariogram2
 semi_mat[7, 7] = 0
 ```
 
-I calculate the semivariogram for the vector of the distances between the points
-and the new prediction coordinates.
+Last, we calculate the semivariogram for the vector of the distances between the points
+and for the new prediction location.
 
 ```{r pred_semivariance, echo = TRUE}
 semi_dist = nugget + partial_sill*exp(-dist_pred/range)
@@ -686,7 +681,7 @@ dist_pred2 = c(semi_dist, 1)
 
 ## Solving for Weights
 
-We can solve for the weights and the lagrange multiplier, v, by taking
+We can solve for the weights and the lagrange multiplier, $\Lambda$, by taking
 the inverse of the matrix and multiplying it by the vector for the distances between
 the points and the new prediction coordinates.
 
@@ -694,11 +689,12 @@ the points and the new prediction coordinates.
 weights_v = solve(semi_mat) %*% dist_pred2
 ```
 
-The weights are the first n values of the resulting vector, where n is the number
+The weights are the first $n$ values of the resulting vector, where $n$ is the number
 of rows in the original data frame. The lagrange multiplier is the final value in
 the vector, and this is used to calculate the variance of the prediction.
 
 ```{r weights_lagrange, echo = TRUE}
+# extracting the values to be used separately 
 weights = weights_v[1:6]
 lagrange = weights_v[7]
 ```
@@ -706,7 +702,7 @@ lagrange = weights_v[7]
 ## Prediction and Error
 
 The predicted value is the sum of each weight multiplied by the corresponding
-z value for the coordinates from the original data frame.
+$z$ value for the coordinates from the original data frame.
 
 ```{r prediction, echo = TRUE}
 z_pred <- sum(weights*dat$z); z_pred
@@ -718,7 +714,7 @@ z_true <- (pred$x + pred$y)/(max(dat$x) + max(dat$y)); z_true
 abs_err <- (z_pred - z_true); abs_err
 ```
 
-The variance of the errors was previously given as $\sigma^2_e = C(0) + \sum_{i=1}^n \lambda_i C(x_0, x_i) + \Lambda$ and can be compute as follows. 
+The variance of the errors was previously given as $\sigma^2_e = C(0) + \sum_{i=1}^n \lambda_i C(x_0, x_i) + \Lambda$ and can be compute as follows.  ($C(0)$ is the nugget, which is zero in this example.)
 
 ```{r variance_of_errors, echo = TRUE}
 variance <- t(weights) %*% semi_dist + lagrange; variance[1]
@@ -770,7 +766,7 @@ mapview(quakes_sf,
 
 ## Quakes - Variogram
 
-The Variogram is one of the most important and insightful parts of kriging. The variogram is first estimated from the data, and then we choose a theoretical model to be fitted to it. There is no "best" method when it comes to choosing a model, but the variogram helps guide you to choosing the best fit for your data. Choosing the best possible model that accurately represents the spatial structure of your data is very important, as it directly impacts the quality of your predictions.
+The Variogram is one of the most important and insightful parts of kriging. The variogram is first estimated from the data, and then we choose a theoretical model to be fitted to it. The sample variogram helps guide you to choosing the best fit for your data. Choosing the best possible model that accurately represents the spatial structure of your data is very important, as it directly impacts the quality of your predictions.
 
 $~$
 
