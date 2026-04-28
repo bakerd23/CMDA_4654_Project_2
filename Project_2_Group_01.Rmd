@@ -11,6 +11,8 @@ output:
     highlight: kate
     theme: Rochester
     citation_package: biblatex
+    includes:
+      after_body: NBAAppendix.tex
 urlcolor: blue
 bibliography: reference.bib
 biblatexoptions: [backend=biber]
@@ -1578,14 +1580,4 @@ bins %>%
 \end{column}
 \end{columns}
 
-## {.allowframebreaks}
 
-\scriptsize
-\printbibliography[heading=none]
-\normalsize
-
-```{r child="NBA Appendix.Rmd"}
-```
-
-```{r child="NBA Appendix.Rmd"}
-```

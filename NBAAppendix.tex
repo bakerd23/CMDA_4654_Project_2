@@ -1,0 +1,259 @@
+
+\begin{frame}[fragile]{NBA Example Code Appendix}
+\phantomsection\label{nba-example-code-appendix}
+Court Drawing:
+\tiny
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Constants}
+\NormalTok{rim\_x }\OtherTok{\textless{}{-}} \FloatTok{5.25}
+\NormalTok{three\_pt\_r }\OtherTok{\textless{}{-}} \FloatTok{23.75}
+\NormalTok{corner\_x }\OtherTok{\textless{}{-}}\NormalTok{ rim\_x }\SpecialCharTok{+} \FunctionTok{sqrt}\NormalTok{(three\_pt\_r}\SpecialCharTok{\^{}}\DecValTok{2} \SpecialCharTok{{-}} \DecValTok{22}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{)}
+\NormalTok{paint\_x }\OtherTok{\textless{}{-}} \DecValTok{19}
+\NormalTok{paint\_y }\OtherTok{\textless{}{-}} \DecValTok{8}
+\NormalTok{bin\_size }\OtherTok{\textless{}{-}} \DecValTok{2}
+\NormalTok{min\_attempts }\OtherTok{\textless{}{-}} \DecValTok{10}
+
+\CommentTok{\# Function to draft the lines of a basketball halfcourt}
+\NormalTok{draw\_court }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{() \{}
+  
+  \CommentTok{\# Define the angle of the three point line}
+\NormalTok{  angle\_top }\OtherTok{\textless{}{-}} \FunctionTok{atan2}\NormalTok{(}\DecValTok{22}\NormalTok{, corner\_x }\SpecialCharTok{{-}}\NormalTok{ rim\_x)}
+\NormalTok{  angle\_bot }\OtherTok{\textless{}{-}} \FunctionTok{atan2}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{22}\NormalTok{, corner\_x }\SpecialCharTok{{-}}\NormalTok{ rim\_x)}
+  
+  \CommentTok{\# Build the three point line using arc points}
+\NormalTok{  arc\_points }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}
+    \AttributeTok{x =}\NormalTok{ rim\_x }\SpecialCharTok{+}\NormalTok{ three\_pt\_r }\SpecialCharTok{*} \FunctionTok{cos}\NormalTok{(}\FunctionTok{seq}\NormalTok{(angle\_top, angle\_bot, }\AttributeTok{length.out =} \DecValTok{1000}\NormalTok{)),}
+    \AttributeTok{y =}\NormalTok{ three\_pt\_r }\SpecialCharTok{*} \FunctionTok{sin}\NormalTok{(}\FunctionTok{seq}\NormalTok{(angle\_top, angle\_bot, }\AttributeTok{length.out =} \DecValTok{1000}\NormalTok{))}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+\end{frame}
+
+\begin{frame}[fragile]{}
+\tiny
+\phantomsection\label{section}
+\begin{Shaded}
+\begin{Highlighting}[]
+  \CommentTok{\# Make a list of the output elements}
+  \FunctionTok{list}\NormalTok{(}
+    \FunctionTok{geom\_path}\NormalTok{(}\AttributeTok{data =}\NormalTok{ arc\_points, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ x, }\AttributeTok{y =}\NormalTok{ y), }\AttributeTok{inherit.aes =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{color =} \StringTok{"black"}\NormalTok{, }\AttributeTok{linewidth =} \FloatTok{0.6}\NormalTok{),}
+    \FunctionTok{geom\_path}\NormalTok{(}\AttributeTok{data =} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{x =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, corner\_x), }\AttributeTok{y =} \FunctionTok{c}\NormalTok{(}\DecValTok{22}\NormalTok{, }\DecValTok{22}\NormalTok{)),}
+              \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ x, }\AttributeTok{y =}\NormalTok{ y), }\AttributeTok{inherit.aes =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{color =} \StringTok{"black"}\NormalTok{, }\AttributeTok{linewidth =} \FloatTok{0.6}\NormalTok{),}
+    \FunctionTok{geom\_path}\NormalTok{(}\AttributeTok{data =} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{x =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, corner\_x), }\AttributeTok{y =} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{22}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{22}\NormalTok{)),}
+              \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ x, }\AttributeTok{y =}\NormalTok{ y), }\AttributeTok{inherit.aes =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{color =} \StringTok{"black"}\NormalTok{, }\AttributeTok{linewidth =} \FloatTok{0.6}\NormalTok{),}
+    \FunctionTok{geom\_path}\NormalTok{(}\AttributeTok{data =} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{x =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{19}\NormalTok{, }\DecValTok{19}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{), }\AttributeTok{y =} \FunctionTok{c}\NormalTok{(}\DecValTok{8}\NormalTok{, }\DecValTok{8}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{8}\NormalTok{, }\SpecialCharTok{{-}}\DecValTok{8}\NormalTok{, }\DecValTok{8}\NormalTok{)),}
+              \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ x, }\AttributeTok{y =}\NormalTok{ y), }\AttributeTok{inherit.aes =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{color =} \StringTok{"black"}\NormalTok{, }\AttributeTok{linewidth =} \FloatTok{0.6}\NormalTok{),}
+    \FunctionTok{geom\_path}\NormalTok{(}\AttributeTok{data =} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{x =} \DecValTok{19} \SpecialCharTok{+} \DecValTok{6} \SpecialCharTok{*} \FunctionTok{cos}\NormalTok{(}\FunctionTok{seq}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{pi}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, pi}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, }\AttributeTok{length.out =} \DecValTok{500}\NormalTok{)),}
+                                \AttributeTok{y =} \DecValTok{6} \SpecialCharTok{*} \FunctionTok{sin}\NormalTok{(}\FunctionTok{seq}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{pi}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, pi}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, }\AttributeTok{length.out =} \DecValTok{500}\NormalTok{))),}
+              \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ x, }\AttributeTok{y =}\NormalTok{ y), }\AttributeTok{inherit.aes =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{color =} \StringTok{"black"}\NormalTok{, }\AttributeTok{linewidth =} \FloatTok{0.6}\NormalTok{),}
+    \FunctionTok{geom\_path}\NormalTok{(}\AttributeTok{data =} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{x =} \DecValTok{19} \SpecialCharTok{+} \DecValTok{6} \SpecialCharTok{*} \FunctionTok{cos}\NormalTok{(}\FunctionTok{seq}\NormalTok{(pi}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, }\DecValTok{3}\SpecialCharTok{*}\NormalTok{pi}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, }\AttributeTok{length.out =} \DecValTok{500}\NormalTok{)),}
+                                \AttributeTok{y =} \DecValTok{6} \SpecialCharTok{*} \FunctionTok{sin}\NormalTok{(}\FunctionTok{seq}\NormalTok{(pi}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, }\DecValTok{3}\SpecialCharTok{*}\NormalTok{pi}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, }\AttributeTok{length.out =} \DecValTok{500}\NormalTok{))),}
+              \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ x, }\AttributeTok{y =}\NormalTok{ y), }\AttributeTok{inherit.aes =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{color =} \StringTok{"black"}\NormalTok{, }\AttributeTok{linewidth =} \FloatTok{0.6}\NormalTok{,}
+              \AttributeTok{linetype =} \StringTok{"dashed"}\NormalTok{),}
+    \FunctionTok{geom\_path}\NormalTok{(}\AttributeTok{data =} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{x =}\NormalTok{ rim\_x }\SpecialCharTok{+} \DecValTok{4} \SpecialCharTok{*} \FunctionTok{cos}\NormalTok{(}\FunctionTok{seq}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{pi}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, pi}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, }\AttributeTok{length.out =} \DecValTok{500}\NormalTok{)),}
+                                \AttributeTok{y =} \DecValTok{4} \SpecialCharTok{*} \FunctionTok{sin}\NormalTok{(}\FunctionTok{seq}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{pi}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, pi}\SpecialCharTok{/}\DecValTok{2}\NormalTok{, }\AttributeTok{length.out =} \DecValTok{500}\NormalTok{))),}
+              \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ x, }\AttributeTok{y =}\NormalTok{ y), }\AttributeTok{inherit.aes =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{color =} \StringTok{"black"}\NormalTok{, }\AttributeTok{linewidth =} \FloatTok{0.6}\NormalTok{),}
+    \FunctionTok{geom\_path}\NormalTok{(}\AttributeTok{data =} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{x =}\NormalTok{ rim\_x }\SpecialCharTok{+} \FloatTok{0.75} \SpecialCharTok{*} \FunctionTok{cos}\NormalTok{(}\FunctionTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{2}\SpecialCharTok{*}\NormalTok{pi, }\AttributeTok{length.out =} \DecValTok{500}\NormalTok{)),}
+                                \AttributeTok{y =} \FloatTok{0.75} \SpecialCharTok{*} \FunctionTok{sin}\NormalTok{(}\FunctionTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{2}\SpecialCharTok{*}\NormalTok{pi, }\AttributeTok{length.out =} \DecValTok{500}\NormalTok{))),}
+              \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ x, }\AttributeTok{y =}\NormalTok{ y), }\AttributeTok{inherit.aes =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{color =} \StringTok{"darkorange2"}\NormalTok{, }\AttributeTok{linewidth =} \FloatTok{0.8}\NormalTok{)}
+\NormalTok{  )}
+\ErrorTok{\}}
+\end{Highlighting}
+\end{Shaded}
+\end{frame}
+
+\begin{frame}[fragile]{Data Cleaning}
+\tiny
+\phantomsection\label{data-cleaning}
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{shots }\OtherTok{\textless{}{-}}\NormalTok{ pbp }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(shooting\_play }\SpecialCharTok{==} \ConstantTok{TRUE}\NormalTok{,}
+         \SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(coordinate\_x),}
+         \SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(coordinate\_y),}
+         \SpecialCharTok{!}\FunctionTok{grepl}\NormalTok{(}\StringTok{"Free Throw"}\NormalTok{, type\_text),}
+\NormalTok{         season\_type }\SpecialCharTok{==} \DecValTok{2}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{left\_join}\NormalTok{(player\_names, }\AttributeTok{by =} \FunctionTok{c}\NormalTok{(}\StringTok{"athlete\_id\_1"} \OtherTok{=} \StringTok{"athlete\_id"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{team\_name =} \FunctionTok{ifelse}\NormalTok{(team\_id }\SpecialCharTok{==}\NormalTok{ home\_team\_id,}
+                       \FunctionTok{paste}\NormalTok{(home\_team\_name, home\_team\_mascot),}
+                       \FunctionTok{paste}\NormalTok{(away\_team\_name, away\_team\_mascot)),}
+    \AttributeTok{x =} \FunctionTok{ifelse}\NormalTok{(coordinate\_x }\SpecialCharTok{\textgreater{}} \DecValTok{0}\NormalTok{, }\SpecialCharTok{{-}}\NormalTok{(coordinate\_x }\SpecialCharTok{{-}} \FloatTok{46.75}\NormalTok{), coordinate\_x }\SpecialCharTok{+} \FloatTok{46.75}\NormalTok{),}
+    \AttributeTok{y =} \FunctionTok{ifelse}\NormalTok{(coordinate\_x }\SpecialCharTok{\textgreater{}} \DecValTok{0}\NormalTok{, }\SpecialCharTok{{-}}\NormalTok{coordinate\_y, coordinate\_y)}
+\NormalTok{  ) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(x }\SpecialCharTok{\textless{}=} \DecValTok{45}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(athlete\_display\_name, team\_name, score\_value, x, y)}
+\end{Highlighting}
+\end{Shaded}
+\end{frame}
+
+\begin{frame}[fragile]{Prediction Grid Helper Function}
+\tiny
+\phantomsection\label{prediction-grid-helper-function}
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{make\_pred\_grid }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{() \{}
+\NormalTok{  pred\_grid }\OtherTok{\textless{}{-}} \FunctionTok{expand.grid}\NormalTok{(}
+    \AttributeTok{x =} \FunctionTok{seq}\NormalTok{(}\FloatTok{0.5}\NormalTok{, }\FloatTok{45.5}\NormalTok{, }\AttributeTok{by =} \DecValTok{1}\NormalTok{),}
+    \AttributeTok{y =} \FunctionTok{seq}\NormalTok{(}\SpecialCharTok{{-}}\FloatTok{24.5}\NormalTok{, }\FloatTok{25.5}\NormalTok{, }\AttributeTok{by =} \DecValTok{1}\NormalTok{)}
+\NormalTok{  ) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{as.data.frame}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{mutate}\NormalTok{(}\AttributeTok{dist\_from\_rim =} \FunctionTok{sqrt}\NormalTok{((x }\SpecialCharTok{{-}}\NormalTok{ rim\_x)}\SpecialCharTok{\^{}}\DecValTok{2} \SpecialCharTok{+}\NormalTok{ y}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{filter}\NormalTok{(dist\_from\_rim }\SpecialCharTok{\textless{}=}\NormalTok{ three\_pt\_r }\SpecialCharTok{+} \DecValTok{5}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{select}\NormalTok{(x, y) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{as.data.frame}\NormalTok{()}
+  
+  \FunctionTok{coordinates}\NormalTok{(pred\_grid) }\OtherTok{\textless{}{-}} \ErrorTok{\textasciitilde{}}\NormalTok{x}\SpecialCharTok{+}\NormalTok{y}
+  \FunctionTok{gridded}\NormalTok{(pred\_grid) }\OtherTok{\textless{}{-}} \ConstantTok{TRUE}
+\NormalTok{  pred\_grid}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+\end{frame}
+
+\begin{frame}[fragile]{Bin-Making Helper Function}
+\tiny
+\phantomsection\label{bin-making-helper-function}
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{make\_bins }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(team, }\AttributeTok{bin\_size =} \DecValTok{2}\NormalTok{, }\AttributeTok{min\_attempts =} \DecValTok{10}\NormalTok{) \{}
+\NormalTok{  team\_shots }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{filter}\NormalTok{(team\_name }\SpecialCharTok{==}\NormalTok{ team) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{mutate}\NormalTok{(}
+      \AttributeTok{x\_bin =} \FunctionTok{floor}\NormalTok{(x }\SpecialCharTok{/}\NormalTok{ bin\_size) }\SpecialCharTok{*}\NormalTok{ bin\_size }\SpecialCharTok{+}\NormalTok{ bin\_size }\SpecialCharTok{/} \DecValTok{2}\NormalTok{,}
+      \AttributeTok{y\_bin =} \FunctionTok{floor}\NormalTok{(y }\SpecialCharTok{/}\NormalTok{ bin\_size) }\SpecialCharTok{*}\NormalTok{ bin\_size }\SpecialCharTok{+}\NormalTok{ bin\_size }\SpecialCharTok{/} \DecValTok{2}
+\NormalTok{    ) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{group\_by}\NormalTok{(x\_bin, y\_bin) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{summarise}\NormalTok{(}
+      \AttributeTok{attempts =} \FunctionTok{n}\NormalTok{(),}
+      \AttributeTok{makes =} \FunctionTok{sum}\NormalTok{(score\_value }\SpecialCharTok{\textgreater{}} \DecValTok{0}\NormalTok{),}
+      \AttributeTok{fg\_pct =}\NormalTok{ makes }\SpecialCharTok{/}\NormalTok{ attempts,}
+      \AttributeTok{.groups =} \StringTok{"drop"}
+\NormalTok{    ) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{filter}\NormalTok{(attempts }\SpecialCharTok{\textgreater{}=}\NormalTok{ min\_attempts) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{mutate}\NormalTok{(}
+      \AttributeTok{dist\_from\_rim =} \FunctionTok{sqrt}\NormalTok{((x\_bin }\SpecialCharTok{{-}}\NormalTok{ rim\_x)}\SpecialCharTok{\^{}}\DecValTok{2} \SpecialCharTok{+}\NormalTok{ y\_bin}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{),}
+      \AttributeTok{is\_three =}\NormalTok{ dist\_from\_rim }\SpecialCharTok{\textgreater{}=}\NormalTok{ three\_pt\_r }\SpecialCharTok{|}\NormalTok{ (}\FunctionTok{abs}\NormalTok{(y\_bin) }\SpecialCharTok{\textgreater{}=} \DecValTok{22} \SpecialCharTok{\&}\NormalTok{ x\_bin }\SpecialCharTok{\textless{}=}\NormalTok{ corner\_x),}
+      \AttributeTok{in\_paint =}\NormalTok{ x\_bin }\SpecialCharTok{\textless{}=}\NormalTok{ paint\_x }\SpecialCharTok{\&} \FunctionTok{abs}\NormalTok{(y\_bin) }\SpecialCharTok{\textless{}=}\NormalTok{ paint\_y,}
+      \AttributeTok{zone =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{        is\_three }\SpecialCharTok{\textasciitilde{}} \StringTok{"Three"}\NormalTok{,}
+\NormalTok{        in\_paint }\SpecialCharTok{\textasciitilde{}} \StringTok{"Paint"}\NormalTok{,}
+        \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \StringTok{"Midrange"}
+\NormalTok{      )}
+\NormalTok{    ) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{as.data.frame}\NormalTok{()}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+\end{frame}
+
+\begin{frame}[fragile]{plot\_attempts Helper Function}
+\tiny
+\phantomsection\label{plot_attempts-helper-function}
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{team\_shots }\OtherTok{\textless{}{-}}\NormalTok{ shots }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(team\_name, score\_value, x, y)}
+
+\NormalTok{plot\_attempts }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(team) \{}
+\NormalTok{  pred\_grid }\OtherTok{\textless{}{-}} \FunctionTok{make\_pred\_grid}\NormalTok{()}
+\NormalTok{  bins }\OtherTok{\textless{}{-}} \FunctionTok{make\_bins}\NormalTok{(team)}
+\NormalTok{  attempt\_bins }\OtherTok{\textless{}{-}}\NormalTok{ bins }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(x\_bin, y\_bin, attempts) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{as.data.frame}\NormalTok{()}
+  \FunctionTok{coordinates}\NormalTok{(attempt\_bins) }\OtherTok{\textless{}{-}} \ErrorTok{\textasciitilde{}}\NormalTok{x\_bin}\SpecialCharTok{+}\NormalTok{y\_bin}
+  
+\NormalTok{  krig\_attempts }\OtherTok{\textless{}{-}} \FunctionTok{suppressWarnings}\NormalTok{(}
+    \FunctionTok{autoKrige}\NormalTok{(attempts }\SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{, }\AttributeTok{input\_data =}\NormalTok{ attempt\_bins, }\AttributeTok{new\_data =}\NormalTok{ pred\_grid)}
+\NormalTok{  )}
+  
+\NormalTok{  krig\_attempts\_df }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(krig\_attempts}\SpecialCharTok{$}\NormalTok{krige\_output)}
+  \FunctionTok{names}\NormalTok{(krig\_attempts\_df) }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"x"}\NormalTok{, }\StringTok{"y"}\NormalTok{, }\StringTok{"attempts\_pred"}\NormalTok{, }\StringTok{"attempts\_var"}\NormalTok{, }\StringTok{"attempts\_stdev"}\NormalTok{)}
+\NormalTok{  krig\_attempts\_df }\OtherTok{\textless{}{-}}\NormalTok{ krig\_attempts\_df }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{mutate}\NormalTok{(}\AttributeTok{attempts\_pred =} \FunctionTok{pmax}\NormalTok{(}\DecValTok{0}\NormalTok{, attempts\_pred))}
+  
+  \FunctionTok{ggplot}\NormalTok{(krig\_attempts\_df, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ x, }\AttributeTok{y =}\NormalTok{ y, }\AttributeTok{fill =}\NormalTok{ attempts\_pred)) }\SpecialCharTok{+}
+    \FunctionTok{geom\_raster}\NormalTok{(}\AttributeTok{interpolate =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{draw\_court}\NormalTok{() }\SpecialCharTok{+}
+    \FunctionTok{scale\_fill\_viridis\_c}\NormalTok{() }\SpecialCharTok{+}
+    \FunctionTok{coord\_fixed}\NormalTok{(}\AttributeTok{xlim =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{35}\NormalTok{), }\AttributeTok{ylim =} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{25}\NormalTok{, }\DecValTok{25}\NormalTok{)) }\SpecialCharTok{+}
+    \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \FunctionTok{paste}\NormalTok{(team, }\StringTok{"{-} Shot Attempts"}\NormalTok{),}
+         \AttributeTok{x =} \StringTok{"Distance from Basket (ft)"}\NormalTok{,}
+         \AttributeTok{y =} \StringTok{"Court Width (ft)"}\NormalTok{,}
+         \AttributeTok{fill =} \StringTok{"Attempts"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{theme\_minimal}\NormalTok{(}\AttributeTok{base\_size =} \DecValTok{7}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{theme}\NormalTok{(}\AttributeTok{panel.grid =} \FunctionTok{element\_blank}\NormalTok{(),}
+          \AttributeTok{plot.margin =} \FunctionTok{margin}\NormalTok{(}\AttributeTok{t =} \DecValTok{2}\NormalTok{, }\AttributeTok{r =} \DecValTok{0}\NormalTok{, }\AttributeTok{b =} \DecValTok{0}\NormalTok{, }\AttributeTok{l =} \SpecialCharTok{{-}}\DecValTok{3}\NormalTok{))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+\end{frame}
+
+\begin{frame}[fragile]{plot\_fg\_pct Helper Function}
+\tiny
+\phantomsection\label{plot_fg_pct-helper-function}
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{plot\_fg\_pct }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(team) \{}
+\NormalTok{  pred\_grid }\OtherTok{\textless{}{-}} \FunctionTok{make\_pred\_grid}\NormalTok{()}
+\NormalTok{  bins }\OtherTok{\textless{}{-}} \FunctionTok{make\_bins}\NormalTok{(team)}
+\NormalTok{  fg\_bins }\OtherTok{\textless{}{-}}\NormalTok{ bins }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(x\_bin, y\_bin, fg\_pct) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{as.data.frame}\NormalTok{()}
+  \FunctionTok{coordinates}\NormalTok{(fg\_bins) }\OtherTok{\textless{}{-}} \ErrorTok{\textasciitilde{}}\NormalTok{x\_bin}\SpecialCharTok{+}\NormalTok{y\_bin}
+  
+\NormalTok{  krig\_fg\_auto }\OtherTok{\textless{}{-}} \FunctionTok{suppressMessages}\NormalTok{(}
+    \FunctionTok{suppressWarnings}\NormalTok{(}\FunctionTok{autoKrige}\NormalTok{(fg\_pct }\SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{, }\AttributeTok{input\_data =}\NormalTok{ fg\_bins, }\AttributeTok{new\_data =}\NormalTok{ pred\_grid))}
+\NormalTok{  )}
+  
+\NormalTok{  krig\_fg\_df }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(krig\_fg\_auto}\SpecialCharTok{$}\NormalTok{krige\_output)}
+  \FunctionTok{names}\NormalTok{(krig\_fg\_df) }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"x"}\NormalTok{, }\StringTok{"y"}\NormalTok{, }\StringTok{"fg\_pred"}\NormalTok{, }\StringTok{"fg\_var"}\NormalTok{, }\StringTok{"fg\_stdev"}\NormalTok{)}
+  
+  \FunctionTok{return}\NormalTok{(}\FunctionTok{list}\NormalTok{(}
+    \AttributeTok{plot =} \FunctionTok{ggplot}\NormalTok{(krig\_fg\_df, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ x, }\AttributeTok{y =}\NormalTok{ y, }\AttributeTok{fill =}\NormalTok{ fg\_pred)) }\SpecialCharTok{+}
+      \FunctionTok{geom\_raster}\NormalTok{(}\AttributeTok{interpolate =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{+}
+      \FunctionTok{draw\_court}\NormalTok{() }\SpecialCharTok{+}
+      \FunctionTok{scale\_fill\_viridis\_c}\NormalTok{(}\AttributeTok{labels =}\NormalTok{ scales}\SpecialCharTok{::}\NormalTok{percent,}
+                           \AttributeTok{limits =} \FunctionTok{c}\NormalTok{(}\FloatTok{0.20}\NormalTok{, }\FloatTok{0.60}\NormalTok{),}
+                           \AttributeTok{oob =}\NormalTok{ scales}\SpecialCharTok{::}\NormalTok{squish) }\SpecialCharTok{+}
+      \FunctionTok{coord\_fixed}\NormalTok{(}\AttributeTok{xlim =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{35}\NormalTok{), }\AttributeTok{ylim =} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{25}\NormalTok{, }\DecValTok{25}\NormalTok{)) }\SpecialCharTok{+}
+      \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \FunctionTok{paste}\NormalTok{(team, }\StringTok{"{-} FG\%"}\NormalTok{),}
+           \AttributeTok{x =} \StringTok{"Distance from Basket (ft)"}\NormalTok{,}
+           \AttributeTok{y =} \StringTok{"Court Width (ft)"}\NormalTok{,}
+           \AttributeTok{fill =} \StringTok{"FG\%"}\NormalTok{) }\SpecialCharTok{+}
+      \FunctionTok{theme\_minimal}\NormalTok{(}\AttributeTok{base\_size =} \DecValTok{7}\NormalTok{) }\SpecialCharTok{+}
+      \FunctionTok{theme}\NormalTok{(}\AttributeTok{panel.grid =} \FunctionTok{element\_blank}\NormalTok{(),}
+            \AttributeTok{plot.margin =} \FunctionTok{margin}\NormalTok{(}\AttributeTok{t =} \DecValTok{2}\NormalTok{, }\AttributeTok{r =} \DecValTok{0}\NormalTok{, }\AttributeTok{b =} \DecValTok{0}\NormalTok{, }\AttributeTok{l =} \SpecialCharTok{{-}}\DecValTok{3}\NormalTok{)),}
+    \AttributeTok{data =}\NormalTok{ krig\_fg\_df,}
+    \AttributeTok{krig =}\NormalTok{ krig\_fg\_auto}
+\NormalTok{  ))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+\end{frame}
+
+\begin{frame}[fragile]{plot\_pps Helper Function}
+\tiny
+\phantomsection\label{plot_pps-helper-function}
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Define a function to perform Kriging on the points per shot data}
+\NormalTok{plot\_pps }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(fg\_data, }\AttributeTok{team =} \StringTok{""}\NormalTok{) \{}
+  
+  \CommentTok{\# Define the number of points each shot is worth}
+\NormalTok{  fg\_data }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{mutate}\NormalTok{(}\AttributeTok{dist\_from\_rim =} \FunctionTok{sqrt}\NormalTok{((x }\SpecialCharTok{{-}}\NormalTok{ rim\_x)}\SpecialCharTok{\^{}}\DecValTok{2} \SpecialCharTok{+}\NormalTok{ y}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{),}
+      \AttributeTok{is\_three =}\NormalTok{ dist\_from\_rim }\SpecialCharTok{\textgreater{}=}\NormalTok{ three\_pt\_r }\SpecialCharTok{|}\NormalTok{ (}\FunctionTok{abs}\NormalTok{(y) }\SpecialCharTok{\textgreater{}=} \DecValTok{22} \SpecialCharTok{\&}\NormalTok{ x }\SpecialCharTok{\textless{}=}\NormalTok{ corner\_x),}
+      \AttributeTok{point\_value =} \FunctionTok{ifelse}\NormalTok{(is\_three, }\DecValTok{3}\NormalTok{, }\DecValTok{2}\NormalTok{),}\AttributeTok{pps =}\NormalTok{ fg\_pred }\SpecialCharTok{*}\NormalTok{ point\_value) }\SpecialCharTok{\%\textgreater{}\%}
+    
+    \CommentTok{\# Plot the data using helper functions}
+    \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ x, }\AttributeTok{y =}\NormalTok{ y, }\AttributeTok{fill =}\NormalTok{ pps)) }\SpecialCharTok{+}
+    \FunctionTok{geom\_raster}\NormalTok{(}\AttributeTok{interpolate =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{draw\_court}\NormalTok{() }\SpecialCharTok{+}
+    \FunctionTok{scale\_fill\_viridis\_c}\NormalTok{(}\AttributeTok{limits =} \FunctionTok{c}\NormalTok{(}\FloatTok{0.5}\NormalTok{, }\FloatTok{2.0}\NormalTok{), }\AttributeTok{oob =}\NormalTok{ scales}\SpecialCharTok{::}\NormalTok{squish) }\SpecialCharTok{+}
+    \FunctionTok{coord\_fixed}\NormalTok{(}\AttributeTok{xlim =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{35}\NormalTok{), }\AttributeTok{ylim =} \FunctionTok{c}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{25}\NormalTok{, }\DecValTok{25}\NormalTok{)) }\SpecialCharTok{+}
+    \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \FunctionTok{paste}\NormalTok{(team, }\StringTok{"{-} Points per Shot"}\NormalTok{),}
+         \AttributeTok{x =} \StringTok{"Distance from Basket (ft)"}\NormalTok{,}
+         \AttributeTok{y =} \StringTok{"Court Width (ft)"}\NormalTok{,}
+         \AttributeTok{fill =} \StringTok{"PPS"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{theme\_minimal}\NormalTok{(}\AttributeTok{base\_size =} \DecValTok{7}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{theme}\NormalTok{(}\AttributeTok{panel.grid =} \FunctionTok{element\_blank}\NormalTok{(), }\AttributeTok{plot.margin =} \FunctionTok{margin}\NormalTok{(}\AttributeTok{t =} \DecValTok{2}\NormalTok{, }\AttributeTok{r =} \DecValTok{0}\NormalTok{, }\AttributeTok{b =} \DecValTok{0}\NormalTok{, }\AttributeTok{l =} \SpecialCharTok{{-}}\DecValTok{3}\NormalTok{))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+\end{frame}
