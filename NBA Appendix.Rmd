@@ -1,0 +1,249 @@
+---
+fontsize: 9pt
+classoption: "aspectratio=169"
+output: 
+  beamer_presentation: 
+    fonttheme: professionalfonts
+    highlight: kate
+    theme: Rochester
+    keep_tex: true
+header-includes:
+- \AtBeginDocument{\let\maketitle\relax}
+- \definecolor{VTmaroon}{HTML}{861F41}
+- \usecolortheme[named=VTmaroon]{structure}
+- \usepackage{booktabs}
+- \usepackage{xcolor}
+- \usepackage{amsmath}
+- \usepackage{amssymb}
+- \usepackage{bm}
+- \AtBeginEnvironment{Shaded}{\tiny}
+- \AtBeginEnvironment{Highlighting}{\tiny}
+---
+
+## NBA Example Code Appendix {.fragile}
+
+Court Drawing:
+
+```{r, echo=TRUE, eval=FALSE}
+# Constants
+rim_x <- 5.25
+three_pt_r <- 23.75
+corner_x <- rim_x + sqrt(three_pt_r^2 - 22^2)
+paint_x <- 19
+paint_y <- 8
+bin_size <- 2
+min_attempts <- 10
+
+# Function to draft the lines of a basketball halfcourt
+draw_court <- function() {
+  
+  # Define the angle of the three point line
+  angle_top <- atan2(22, corner_x - rim_x)
+  angle_bot <- atan2(-22, corner_x - rim_x)
+  
+  # Build the three point line using arc points
+  arc_points <- data.frame(
+    x = rim_x + three_pt_r * cos(seq(angle_top, angle_bot, length.out = 1000)),
+    y = three_pt_r * sin(seq(angle_top, angle_bot, length.out = 1000))
+  )
+```
+
+## {.fragile}
+
+```{r, echo=TRUE, eval=FALSE}
+  # Make a list of the output elements
+  list(
+    geom_path(data = arc_points, aes(x = x, y = y), inherit.aes = FALSE, color = "black", linewidth = 0.6),
+    geom_path(data = data.frame(x = c(0, corner_x), y = c(22, 22)),
+              aes(x = x, y = y), inherit.aes = FALSE, color = "black", linewidth = 0.6),
+    geom_path(data = data.frame(x = c(0, corner_x), y = c(-22, -22)),
+              aes(x = x, y = y), inherit.aes = FALSE, color = "black", linewidth = 0.6),
+    geom_path(data = data.frame(x = c(0, 19, 19, 0, 0), y = c(8, 8, -8, -8, 8)),
+              aes(x = x, y = y), inherit.aes = FALSE, color = "black", linewidth = 0.6),
+    geom_path(data = data.frame(x = 19 + 6 * cos(seq(-pi/2, pi/2, length.out = 500)),
+                                y = 6 * sin(seq(-pi/2, pi/2, length.out = 500))),
+              aes(x = x, y = y), inherit.aes = FALSE, color = "black", linewidth = 0.6),
+    geom_path(data = data.frame(x = 19 + 6 * cos(seq(pi/2, 3*pi/2, length.out = 500)),
+                                y = 6 * sin(seq(pi/2, 3*pi/2, length.out = 500))),
+              aes(x = x, y = y), inherit.aes = FALSE, color = "black", linewidth = 0.6,
+              linetype = "dashed"),
+    geom_path(data = data.frame(x = rim_x + 4 * cos(seq(-pi/2, pi/2, length.out = 500)),
+                                y = 4 * sin(seq(-pi/2, pi/2, length.out = 500))),
+              aes(x = x, y = y), inherit.aes = FALSE, color = "black", linewidth = 0.6),
+    geom_path(data = data.frame(x = rim_x + 0.75 * cos(seq(0, 2*pi, length.out = 500)),
+                                y = 0.75 * sin(seq(0, 2*pi, length.out = 500))),
+              aes(x = x, y = y), inherit.aes = FALSE, color = "darkorange2", linewidth = 0.8)
+  )
+}
+```
+
+## Data Cleaning {.fragile}
+
+```{r, echo=TRUE, eval=FALSE}
+shots <- pbp %>%
+  filter(shooting_play == TRUE,
+         !is.na(coordinate_x),
+         !is.na(coordinate_y),
+         !grepl("Free Throw", type_text),
+         season_type == 2) %>%
+  left_join(player_names, by = c("athlete_id_1" = "athlete_id")) %>%
+  mutate(
+    team_name = ifelse(team_id == home_team_id,
+                       paste(home_team_name, home_team_mascot),
+                       paste(away_team_name, away_team_mascot)),
+    x = ifelse(coordinate_x > 0, -(coordinate_x - 46.75), coordinate_x + 46.75),
+    y = ifelse(coordinate_x > 0, -coordinate_y, coordinate_y)
+  ) %>%
+  filter(x <= 45) %>%
+  select(athlete_display_name, team_name, score_value, x, y)
+```
+
+## Prediction Grid Helper Function {.fragile}
+
+```{r, echo=TRUE, eval=FALSE}
+make_pred_grid <- function() {
+  pred_grid <- expand.grid(
+    x = seq(0.5, 45.5, by = 1),
+    y = seq(-24.5, 25.5, by = 1)
+  ) %>%
+    as.data.frame() %>%
+    mutate(dist_from_rim = sqrt((x - rim_x)^2 + y^2)) %>%
+    filter(dist_from_rim <= three_pt_r + 5) %>%
+    select(x, y) %>%
+    as.data.frame()
+  
+  coordinates(pred_grid) <- ~x+y
+  gridded(pred_grid) <- TRUE
+  pred_grid
+}
+```
+
+## Bin-Making Helper Function {.fragile}
+
+```{r, echo=TRUE, eval=FALSE}
+make_bins <- function(team, bin_size = 2, min_attempts = 10) {
+  team_shots %>%
+    filter(team_name == team) %>%
+    mutate(
+      x_bin = floor(x / bin_size) * bin_size + bin_size / 2,
+      y_bin = floor(y / bin_size) * bin_size + bin_size / 2
+    ) %>%
+    group_by(x_bin, y_bin) %>%
+    summarise(
+      attempts = n(),
+      makes = sum(score_value > 0),
+      fg_pct = makes / attempts,
+      .groups = "drop"
+    ) %>%
+    filter(attempts >= min_attempts) %>%
+    mutate(
+      dist_from_rim = sqrt((x_bin - rim_x)^2 + y_bin^2),
+      is_three = dist_from_rim >= three_pt_r | (abs(y_bin) >= 22 & x_bin <= corner_x),
+      in_paint = x_bin <= paint_x & abs(y_bin) <= paint_y,
+      zone = case_when(
+        is_three ~ "Three",
+        in_paint ~ "Paint",
+        TRUE ~ "Midrange"
+      )
+    ) %>%
+    as.data.frame()
+}
+```
+
+## plot_attempts Helper Function {.fragile}
+
+```{r, echo=TRUE, eval=FALSE}
+team_shots <- shots %>% select(team_name, score_value, x, y)
+
+plot_attempts <- function(team) {
+  pred_grid <- make_pred_grid()
+  bins <- make_bins(team)
+  attempt_bins <- bins %>% select(x_bin, y_bin, attempts) %>% as.data.frame()
+  coordinates(attempt_bins) <- ~x_bin+y_bin
+  
+  krig_attempts <- suppressWarnings(
+    autoKrige(attempts ~ 1, input_data = attempt_bins, new_data = pred_grid)
+  )
+  
+  krig_attempts_df <- as.data.frame(krig_attempts$krige_output)
+  names(krig_attempts_df) <- c("x", "y", "attempts_pred", "attempts_var", "attempts_stdev")
+  krig_attempts_df <- krig_attempts_df %>% mutate(attempts_pred = pmax(0, attempts_pred))
+  
+  ggplot(krig_attempts_df, aes(x = x, y = y, fill = attempts_pred)) +
+    geom_raster(interpolate = TRUE) +
+    draw_court() +
+    scale_fill_viridis_c() +
+    coord_fixed(xlim = c(0, 35), ylim = c(-25, 25)) +
+    labs(title = paste(team, "- Shot Attempts"),
+         x = "Distance from Basket (ft)",
+         y = "Court Width (ft)",
+         fill = "Attempts") +
+    theme_minimal(base_size = 7) +
+    theme(panel.grid = element_blank(),
+          plot.margin = margin(t = 2, r = 0, b = 0, l = -3))
+}
+```
+
+## plot_fg_pct Helper Function {.fragile}
+
+```{r, echo=TRUE, eval=FALSE}
+plot_fg_pct <- function(team) {
+  pred_grid <- make_pred_grid()
+  bins <- make_bins(team)
+  fg_bins <- bins %>% select(x_bin, y_bin, fg_pct) %>% as.data.frame()
+  coordinates(fg_bins) <- ~x_bin+y_bin
+  
+  krig_fg_auto <- suppressMessages(
+    suppressWarnings(autoKrige(fg_pct ~ 1, input_data = fg_bins, new_data = pred_grid))
+  )
+  
+  krig_fg_df <- as.data.frame(krig_fg_auto$krige_output)
+  names(krig_fg_df) <- c("x", "y", "fg_pred", "fg_var", "fg_stdev")
+  
+  return(list(
+    plot = ggplot(krig_fg_df, aes(x = x, y = y, fill = fg_pred)) +
+      geom_raster(interpolate = TRUE) +
+      draw_court() +
+      scale_fill_viridis_c(labels = scales::percent,
+                           limits = c(0.20, 0.60),
+                           oob = scales::squish) +
+      coord_fixed(xlim = c(0, 35), ylim = c(-25, 25)) +
+      labs(title = paste(team, "- FG%"),
+           x = "Distance from Basket (ft)",
+           y = "Court Width (ft)",
+           fill = "FG%") +
+      theme_minimal(base_size = 7) +
+      theme(panel.grid = element_blank(),
+            plot.margin = margin(t = 2, r = 0, b = 0, l = -3)),
+    data = krig_fg_df,
+    krig = krig_fg_auto
+  ))
+}
+```
+
+## plot_pps Helper Function
+
+```{r, echo=TRUE, eval=FALSE}
+# Define a function to perform Kriging on the points per shot data
+plot_pps <- function(fg_data, team = "") {
+  
+  # Define the number of points each shot is worth
+  fg_data %>%
+    mutate(dist_from_rim = sqrt((x - rim_x)^2 + y^2),
+      is_three = dist_from_rim >= three_pt_r | (abs(y) >= 22 & x <= corner_x),
+      point_value = ifelse(is_three, 3, 2),pps = fg_pred * point_value) %>%
+    
+    # Plot the data using helper functions
+    ggplot(aes(x = x, y = y, fill = pps)) +
+    geom_raster(interpolate = TRUE) +
+    draw_court() +
+    scale_fill_viridis_c(limits = c(0.5, 2.0), oob = scales::squish) +
+    coord_fixed(xlim = c(0, 35), ylim = c(-25, 25)) +
+    labs(title = paste(team, "- Points per Shot"),
+         x = "Distance from Basket (ft)",
+         y = "Court Width (ft)",
+         fill = "PPS") +
+    theme_minimal(base_size = 7) +
+    theme(panel.grid = element_blank(), plot.margin = margin(t = 2, r = 0, b = 0, l = -3))
+}
+```
