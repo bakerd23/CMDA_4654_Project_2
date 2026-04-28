@@ -1578,3 +1578,14 @@ bins %>%
 \end{column}
 \end{columns}
 
+## {.allowframebreaks}
+
+\scriptsize
+\printbibliography[heading=none]
+\normalsize
+
+```{r child="NBA Appendix.Rmd"}
+```
+
+```{r child="NBA Appendix.Rmd"}
+```
